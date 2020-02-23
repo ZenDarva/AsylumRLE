@@ -12,6 +12,7 @@ public abstract class Component extends TileGrid {
     protected TileGrid tileGrid;
     @Getter protected Point location;
 
+
     public Component(Dimension dimension) {
         super(dimension);
     }
@@ -28,6 +29,7 @@ public abstract class Component extends TileGrid {
         componentList.remove(component);
     }
 
+    public boolean isFocusable;
 
 
 }

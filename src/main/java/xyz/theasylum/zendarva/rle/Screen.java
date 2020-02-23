@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import xyz.theasylum.zendarva.rle.component.Component;
 import xyz.theasylum.zendarva.rle.exception.MissingFont;
+import xyz.theasylum.zendarva.rle.handler.KeyHandler;
 
 public class Screen extends Thread {
     protected static final Logger LOG= LogManager.getLogger(Screen.class);
@@ -34,6 +35,7 @@ public class Screen extends Thread {
     private JFrame frame;
     private Font font;
     private Canvas canvas;
+    private KeyHandler fallbackKeyHandler;
 
     public Screen(Consumer<Long> mainFunction){
         this(new Dimension(800,600),mainFunction);
@@ -138,11 +140,15 @@ public class Screen extends Thread {
         frame.add(canvas);
         frame.setVisible(true);
         canvas.createBufferStrategy(2);
-        frame.addKeyListener(new KeyHandler());
-
+        frame.addKeyListener(new LocalKeyHandler());
     }
 
-    private class KeyHandler implements KeyListener {
+    private void setFallbackKeyHandler(KeyHandler fallbackKeyHandler){
+
+        this.fallbackKeyHandler = fallbackKeyHandler;
+    }
+
+    private class LocalKeyHandler implements KeyListener {
 
         @Override
         public void keyTyped(KeyEvent e) {
@@ -159,6 +165,7 @@ public class Screen extends Thread {
             if (e.getKeyCode() == KeyEvent.VK_ESCAPE){
                 RUNNING=false;
             }
+
         }
     }
 }
