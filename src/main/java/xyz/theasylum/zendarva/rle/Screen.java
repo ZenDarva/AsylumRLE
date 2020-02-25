@@ -5,9 +5,10 @@ import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.awt.image.BufferStrategy;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,13 +33,13 @@ public class Screen extends Thread {
 
     protected long lastTime = System.currentTimeMillis();
 
-    private JFrame frame;
+    private Frame frame;
     private Font font;
     private Canvas canvas;
     private KeyHandler fallbackKeyHandler;
 
     public Screen(Consumer<Long> mainFunction){
-        this(new Dimension(800,600),mainFunction);
+        this(new Dimension(80,40),mainFunction);
     }
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction){
@@ -46,11 +47,18 @@ public class Screen extends Thread {
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
         try {
-            font = new Font("/Fonts/DejaVu Sans Mono/20pt/bitmap.png");
+            font = new Font(new FontGenerator("/Fonts/DejaVuSansMono.ttf",50f));
         } catch (MissingFont missingFont) {
             LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
             System.exit(-1);
         }
+    }
+
+    public Screen(Dimension dimensions, Consumer<Long> mainFunction, Font font){
+        this.dimensions = dimensions;
+        this.mainFunction = mainFunction;
+        this.componentList=new ArrayList<>();
+        this.font=font;
     }
 
     public void addComponent(Component component){
@@ -105,7 +113,7 @@ public class Screen extends Thread {
             Graphics2D g = (Graphics2D) strat.getDrawGraphics();
 
             g.setColor(Color.BLACK);
-            g.fillRect(0,0,dimensions.width,dimensions.height);
+            g.fillRect(0,0,dimensions.width*font.charWidth,dimensions.height*font.charHeight);
 
             componentList.forEach(component ->this.drawComponent(component,g));
 
@@ -130,17 +138,34 @@ public class Screen extends Thread {
         component.getComponents().forEach(child -> drawComponent(child,g));
     }
 
-    protected void startup(){
-        frame = new JFrame("");
-        frame.setSize(dimensions);
+    private void startup(){
+        frame = new Frame("");
+        frame.setResizable(false);
+        frame.setLayout(new FlowLayout());
+        frame.setLocationRelativeTo(null);
+
+
         frame.setIgnoreRepaint(true);
         canvas = new Canvas();
         canvas.setIgnoreRepaint(true);
-        canvas.setSize(dimensions);
+        canvas.setPreferredSize(calculateDimension());
+        canvas.setLocation(new Point(0,0));
         frame.add(canvas);
         frame.setVisible(true);
         canvas.createBufferStrategy(2);
         frame.addKeyListener(new LocalKeyHandler());
+        frame.pack();
+
+        frame.addWindowListener(new WindowAdapter(){
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                RUNNING=false;
+            }
+        });
+    }
+    private Dimension calculateDimension(){
+        return new Dimension(dimensions.width*font.charWidth,dimensions.height*font.charHeight);
     }
 
     private void setFallbackKeyHandler(KeyHandler fallbackKeyHandler){

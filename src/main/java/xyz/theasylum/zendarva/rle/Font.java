@@ -4,6 +4,7 @@ package xyz.theasylum.zendarva.rle;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.theasylum.zendarva.rle.exception.MissingFont;
@@ -34,7 +35,15 @@ public class Font {
 
 
     Cache<Integer, Image> tintCache;
-
+    @SneakyThrows
+    public Font (FontGenerator fg){
+        //fontTexture=ImageIO.read(new File("C:\\temp\\test.png"));
+        fontTexture=fg.finalImage;
+        fontMap=fg.fontMap;
+        tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
+        charWidth=fg.charWidth;
+        charHeight=fg.charHeight;
+    }
     public Font(String jarFont) throws MissingFont {
         InputStream stream = Image.class.getResourceAsStream(jarFont);
         if (stream == null) {
@@ -57,6 +66,7 @@ public class Font {
         loadFontResource(datPath);
 
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
+
     }
 
 

@@ -1,6 +1,7 @@
 package xyz.theasylum.zendarva.rle.component;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.List;
 public abstract class Component extends TileGrid {
     private List<Component> componentList = new ArrayList<>();
     protected TileGrid tileGrid;
-    @Getter protected Point location;
+    @Getter @Setter protected Point location;
 
 
     public Component(Dimension dimension) {
