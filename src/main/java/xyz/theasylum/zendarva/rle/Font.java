@@ -35,63 +35,32 @@ public class Font {
 
 
     Cache<Integer, Image> tintCache;
-    @SneakyThrows
+
     public Font (FontGenerator fg){
-        //fontTexture=ImageIO.read(new File("C:\\temp\\test.png"));
         fontTexture=fg.finalImage;
         fontMap=fg.fontMap;
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
         charWidth=fg.charWidth;
         charHeight=fg.charHeight;
     }
-    public Font(String jarFont) throws MissingFont {
-        InputStream stream = Image.class.getResourceAsStream(jarFont);
-        if (stream == null) {
-            LOG.error("Attempted to load nonexistant jarFont {}.", jarFont);
-            throw new MissingFont();
-        }
-        try {
-            fontTexture = ImageIO.read(stream);
-        } catch (IOException e) {
-            LOG.error("Exception when loading jarFont {} {}", jarFont, e);
-            throw new MissingFont();
-        }
 
-        String fileName = jarFont;
-
-
-        int index = jarFont.lastIndexOf('/');
-        String datPath = jarFont.substring(0,index);
-        datPath+="/data.fnt";
-        loadFontResource(datPath);
-
+    public Font(String jarFont, float size) throws MissingFont {
+        FontGenerator fg = new FontGenerator(jarFont, size);
+        fontTexture=fg.finalImage;
+        fontMap=fg.fontMap;
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
-
+        charWidth=fg.charWidth;
+        charHeight=fg.charHeight;
     }
 
 
-    public Font(File file) throws MissingFont {
-        if (!file.exists()) {
-            LOG.error("Attempted to load a font that does not exist: {}.", file);
-            throw new MissingFont();
-        }
-        try {
-            fontTexture = ImageIO.read(file);
-        } catch (IOException e) {
-            LOG.error("Exception when loading Font {} {}", file, e);
-            throw new MissingFont();
-        }
-        String fileName = file.getName();
-        fileName.replaceAll(".*", ".fnt");
-        File fontFile = new File(file.getParentFile(), "data.fnt");
-        try {
-            loadFontFile(fontFile);
-        } catch (IOException e) {
-            LOG.error("Exception when loading Font description {} {}", fontFile, e);
-            throw new MissingFont();
-        }
-
+    public Font(File fontFile, float size) throws MissingFont {
+        FontGenerator fg = new FontGenerator(fontFile, size);
+        fontTexture=fg.finalImage;
+        fontMap=fg.fontMap;
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
+        charWidth=fg.charWidth;
+        charHeight=fg.charHeight;
     }
 
 

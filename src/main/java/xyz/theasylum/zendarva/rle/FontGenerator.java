@@ -29,14 +29,25 @@ public class FontGenerator {
     private static final Logger LOG = LogManager.getLogger(FontGenerator.class);
 
 
-    public FontGenerator(File file, float size) throws IOException, FontFormatException, MissingFont {
+    public FontGenerator(File file, float size) throws MissingFont {
 
         if (!file.exists()){
             LOG.error("Attempting to load non-existant font: {}", file.getAbsolutePath());
             throw new MissingFont();
         }
 
-        Font fnt = Font.createFont(Font.TRUETYPE_FONT, file).deriveFont(size);
+
+        Font fnt = null;
+        try {
+            fnt = Font.createFont(Font.TRUETYPE_FONT, file).deriveFont(size);
+        } catch (FontFormatException e) {
+            LOG.error("Error loading Font: {}",file.toPath());
+            throw new MissingFont(e);
+        } catch (IOException e) {
+            LOG.error("Error loading Font: {}",file.toPath());
+            throw new MissingFont(e);
+        }
+
 
         junkImage = new BufferedImage(100,100,BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = junkImage.createGraphics();
