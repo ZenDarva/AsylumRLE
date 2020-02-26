@@ -7,7 +7,7 @@ import java.awt.*;
 
 public class TileGrid {
     private Tile[][] tiles;
-    private Dimension dimension;
+    protected Dimension dimension;
 
     @Getter private boolean changed = true;
 

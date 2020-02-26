@@ -2,41 +2,36 @@ package xyz.theasylum.zendarva.rle;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.theasylum.zendarva.rle.component.Button;
+import xyz.theasylum.zendarva.rle.component.Component;
+import xyz.theasylum.zendarva.rle.exception.MissingFont;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferStrategy;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EventListener;
 import java.util.List;
 import java.util.function.Consumer;
-import xyz.theasylum.zendarva.rle.component.Component;
-import xyz.theasylum.zendarva.rle.exception.MissingFont;
-import xyz.theasylum.zendarva.rle.handler.KeyHandler;
 
 public class Screen extends Thread {
     protected static final Logger LOG= LogManager.getLogger(Screen.class);
     protected final Dimension dimensions;
 
     protected Thread gameThread;
-
     protected Consumer<Long> mainFunction;
-
     protected java.util.List<Component> componentList;
-
     protected boolean RUNNING=true;
-
-    protected boolean mainLoop = true;
-
     protected long lastTime = System.currentTimeMillis();
 
     private Frame frame;
     private Font font;
     private Canvas canvas;
-    private KeyHandler fallbackKeyHandler;
+    private EventListener fallbackKeyHandler;
+
+    private Point mouseLoc = new Point(0,0);
+    private Component hovered = null;
 
     public Screen(Consumer<Long> mainFunction){
         this(new Dimension(80,40),mainFunction);
@@ -62,7 +57,7 @@ public class Screen extends Thread {
     }
 
     public void addComponent(Component component){
-        componentList.add(component);
+        componentList.add(0,component);
     }
 
     public List<Component> getComponents(){
@@ -73,7 +68,6 @@ public class Screen extends Thread {
     }
 
     public void startEngine(){
-        if (mainLoop) {
             gameThread = new Thread() {
                 @Override
                 public void run() {
@@ -85,10 +79,6 @@ public class Screen extends Thread {
                 }
             };
             gameThread.start();
-        }
-        else {
-            startup();
-        }
     }
 
 
@@ -115,7 +105,11 @@ public class Screen extends Thread {
             g.setColor(Color.BLACK);
             g.fillRect(0,0,dimensions.width*font.charWidth,dimensions.height*font.charHeight);
 
-            componentList.forEach(component ->this.drawComponent(component,g));
+            //Component list is stored newest to oldest for control interactions, but should be drawn
+            //oldest to newest.
+            for (int i = componentList.size() - 1; i >= 0; i--) {
+                this.drawComponent(componentList.get(i),g);
+            }
 
 
             g.dispose();
@@ -153,8 +147,10 @@ public class Screen extends Thread {
         frame.add(canvas);
         frame.setVisible(true);
         canvas.createBufferStrategy(2);
-        frame.addKeyListener(new LocalKeyHandler());
+
         frame.pack();
+        canvas.setFocusable(true);
+        canvas.requestFocus();
 
         frame.addWindowListener(new WindowAdapter(){
 
@@ -163,15 +159,46 @@ public class Screen extends Thread {
                 RUNNING=false;
             }
         });
+
+        canvas.addMouseListener(new LocalMouseHandler());
+        canvas.addMouseMotionListener(new LocalMouseMotionListener());
+        canvas.addKeyListener(new LocalKeyHandler());
     }
     private Dimension calculateDimension(){
         return new Dimension(dimensions.width*font.charWidth,dimensions.height*font.charHeight);
     }
 
-    private void setFallbackKeyHandler(KeyHandler fallbackKeyHandler){
+    private void setFallbackKeyHandler(EventListener fallbackInputHandler){
 
         this.fallbackKeyHandler = fallbackKeyHandler;
     }
+
+    public Point translateToGrid(Point point){
+        return new Point(point.x/font.charWidth,point.y/font.charHeight);
+    }
+    private Component getHovered() {
+        Component hovered = null;
+        for (Component component : componentList) {
+            if (component.contains(mouseLoc)){
+                hovered = getHoveredChild(component);
+                break;
+            }
+        }
+        return hovered;
+    }
+
+    private Component getHoveredChild(Component targComponent){
+        Component hovered = null;
+        for (Component component : targComponent.getComponents()) {
+            if (component.contains(mouseLoc)){
+                hovered = getHoveredChild(component);
+            }
+        }
+        if (hovered == null)
+            hovered=targComponent;
+        return hovered;
+    }
+
 
     private class LocalKeyHandler implements KeyListener {
 
@@ -191,6 +218,62 @@ public class Screen extends Thread {
                 RUNNING=false;
             }
 
+        }
+    }
+
+    private class LocalMouseHandler implements MouseListener{
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+
+            Point gridPoint = translateToGrid(e.getPoint());
+            for (Component component : componentList) {
+                if (!component.contains(gridPoint))
+                    continue;
+                if (component.mouseClicked(gridPoint,e.getButton()))
+                    return;
+            }
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+
+        }
+    }
+
+    private class LocalMouseMotionListener implements MouseMotionListener {
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            mouseLoc = translateToGrid(e.getPoint());
+            Component newHovered = getHovered();
+            if (newHovered != hovered){
+                if (hovered !=null)
+                    hovered.mouseLeft();
+                if (newHovered !=null)
+                    newHovered.mouseEntered();
+                hovered=newHovered;
+            }
         }
     }
 }

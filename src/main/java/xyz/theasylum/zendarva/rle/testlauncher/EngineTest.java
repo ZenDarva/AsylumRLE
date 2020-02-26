@@ -24,6 +24,7 @@ public class EngineTest {
         screen.addComponent(layer);
         Button button = new Button(new Dimension(10,1),"Test");
         button.setLocation(new Point(10,10));
+        button.setOnClick((loc,btn)->{if (btn == 1)System.out.println("Whoa!");});
         screen.addComponent(button);
 
         screen.startEngine();
