@@ -1,20 +1,25 @@
 package xyz.theasylum.zendarva.rle.component;
 
-import xyz.theasylum.zendarva.rle.event.EventProcedure;
+import xyz.theasylum.zendarva.rle.palette.ButtonPalette;
+import xyz.theasylum.zendarva.rle.palette.Palette;
+import xyz.theasylum.zendarva.rle.palette.PaletteManager;
 
 import java.awt.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class Button extends Component {
+    private final String text;
     private BiConsumer<Point, Integer> procedure;
+    ButtonPalette palette;
 
     public Button(Dimension dimension, String text) {
         super(dimension);
+        this.text = text;
+        palette= PaletteManager.getInstance().getPalette("default",ButtonPalette.class);
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
-                this.setTileBackground(x,y,Color.GRAY);
-                this.setTileForeground(x,y,Color.white);
+                this.setTileBackground(x,y,palette.getBackground());
+                this.setTileForeground(x,y,palette.getForeground());
             }
         }
         drawText(text,new Point(dimension.width/2 - text.length()/2,dimension.height/2),this);
@@ -44,8 +49,8 @@ public class Button extends Component {
     public void mouseEntered() {
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
-                this.setTileBackground(x,y,Color.lightGray);
-                this.setTileForeground(x,y,Color.BLACK);
+                this.setTileBackground(x,y,palette.getHoverBackground());
+                this.setTileForeground(x,y,palette.getHoverForeground());
             }
         }
     }
@@ -54,9 +59,23 @@ public class Button extends Component {
     public void mouseLeft() {
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
-                this.setTileBackground(x,y,Color.GRAY);
-                this.setTileForeground(x,y,Color.white);
+                this.setTileBackground(x,y,palette.getBackground());
+                this.setTileForeground(x,y,palette.getForeground());
             }
         }
+    }
+
+    @Override
+    public void update(Long time) {
+        if (!isDirty)
+            return;
+        for (int x = 0; x < dimension.width; x++) {
+            for (int y = 0; y < dimension.height; y++) {
+                this.setTileBackground(x,y,palette.getBackground());
+                this.setTileForeground(x,y,palette.getForeground());
+            }
+        }
+        drawText(text,new Point(dimension.width/2 - text.length()/2,dimension.height/2),this);
+        isDirty=false;
     }
 }

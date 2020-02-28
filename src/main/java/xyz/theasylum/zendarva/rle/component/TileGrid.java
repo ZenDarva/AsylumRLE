@@ -4,6 +4,8 @@ import lombok.Getter;
 import xyz.theasylum.zendarva.rle.Tile;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.Map;
 
 public class TileGrid {
     private Tile[][] tiles;
@@ -53,4 +55,6 @@ public class TileGrid {
         changed = false;
         return tiles;
     }
+
+    public Map<Point, Tile> getExtras(){return Collections.emptyMap();}
 }

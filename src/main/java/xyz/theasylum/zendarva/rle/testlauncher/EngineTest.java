@@ -1,8 +1,8 @@
 package xyz.theasylum.zendarva.rle.testlauncher;
 
 import xyz.theasylum.zendarva.rle.Screen;
+import xyz.theasylum.zendarva.rle.component.*;
 import xyz.theasylum.zendarva.rle.component.Button;
-import xyz.theasylum.zendarva.rle.component.Layer;
 
 import java.awt.*;
 import java.io.IOException;
@@ -26,6 +26,25 @@ public class EngineTest {
         button.setLocation(new Point(10,10));
         button.setOnClick((loc,btn)->{if (btn == 1)System.out.println("Whoa!");});
         screen.addComponent(button);
+
+        TextEntry entry = new TextEntry(new Dimension(10,1));
+        entry.setLocation(new Point(10,15));
+        screen.addComponent(entry);
+
+        OptionButton button1 = new OptionButton(new Dimension(10,1),"Yes");
+        button1.setLocation(new Point(30,10));
+        OptionButton button2 = new OptionButton(new Dimension(10,1),"No");
+        button2.setLocation(new Point(30,15));
+
+        button1.addPeer(button2);
+
+        screen.addComponent(button1);
+        screen.addComponent(button2);
+
+        NumberSpinner spinner = new NumberSpinner(255,0,128);
+        spinner.setLocation(new Point(45,10));
+
+        screen.addComponent(spinner);
 
         screen.startEngine();
 //        Screen screen = new Screen(EngineTest::processGame);

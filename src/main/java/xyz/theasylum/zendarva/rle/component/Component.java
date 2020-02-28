@@ -3,8 +3,10 @@ package xyz.theasylum.zendarva.rle.component;
 import lombok.Getter;
 import lombok.Setter;
 import xyz.theasylum.zendarva.rle.event.EventListener;
+import xyz.theasylum.zendarva.rle.utility.PointUtilities;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,10 +17,14 @@ public abstract class Component extends TileGrid implements EventListener {
     protected Point location = new Point(0,0);
     protected Rectangle rect;
 
+    protected boolean isDirty = true;
+
+
+
 
     public Component(Dimension dimension) {
         super(dimension);
-        rect = new Rectangle(location.x, location.y, getWidth(),getHeight());
+        rect = new Rectangle(0, 0, getWidth(),getHeight());
     }
 
     public Point getLocation() {
@@ -41,13 +47,15 @@ public abstract class Component extends TileGrid implements EventListener {
         componentList.remove(component);
     }
 
-    public boolean isFocusable;
+
+
+    public void update(Long time){}
 
     @Override
     public boolean mouseClicked(Point position, int button) {
         for (Component component : componentList) {
-            if (component.contains(position)){
-                if (component.mouseClicked(position,button))
+            if (component.contains(PointUtilities.makeRelative(position,component.location))){
+                if (component.mouseClicked(PointUtilities.makeRelative(position,component.location),button))
                         return true;
             }
         }
@@ -55,7 +63,7 @@ public abstract class Component extends TileGrid implements EventListener {
     }
 
     @Override
-    public boolean keyTyped(int keycode) {
+    public boolean keyTyped(KeyEvent keyEvent) {
         return false;
     }
 
@@ -71,5 +79,9 @@ public abstract class Component extends TileGrid implements EventListener {
     @Override
     public void mouseLeft() {
 
+    }
+
+    protected void setDirty(){
+        isDirty=true;
     }
 }

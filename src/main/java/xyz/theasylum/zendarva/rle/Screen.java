@@ -1,10 +1,15 @@
 package xyz.theasylum.zendarva.rle;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.theasylum.zendarva.rle.component.Button;
 import xyz.theasylum.zendarva.rle.component.Component;
+import xyz.theasylum.zendarva.rle.event.EventQueueManager;
+import xyz.theasylum.zendarva.rle.event.event.GuiEvent;
 import xyz.theasylum.zendarva.rle.exception.MissingFont;
+import xyz.theasylum.zendarva.rle.utility.PointUtilities;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -15,6 +20,8 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.function.Consumer;
 
+
+
 public class Screen extends Thread {
     protected static final Logger LOG= LogManager.getLogger(Screen.class);
     protected final Dimension dimensions;
@@ -24,11 +31,14 @@ public class Screen extends Thread {
     protected java.util.List<Component> componentList;
     protected boolean RUNNING=true;
     protected long lastTime = System.currentTimeMillis();
+    @Getter @Setter String windowTitle ="AsylumRL";
 
     private Frame frame;
     private Font font;
     private Canvas canvas;
     private EventListener fallbackKeyHandler;
+
+    private Component focusedComponent = null;
 
     private Point mouseLoc = new Point(0,0);
     private Component hovered = null;
@@ -42,7 +52,7 @@ public class Screen extends Thread {
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
         try {
-            font = new Font(new FontGenerator("/Fonts/DejaVuSansMono.ttf",50f));
+            font = new Font(new FontGenerator("/Fonts/DejaVuSansMono.ttf",20f));
         } catch (MissingFont missingFont) {
             LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
             System.exit(-1);
@@ -85,17 +95,26 @@ public class Screen extends Thread {
     private void mainLoop(){
 
         while(RUNNING){
-            mainFunction.accept(System.currentTimeMillis() - lastTime);
+            long gameTime = System.currentTimeMillis() - lastTime;
+            lastTime=System.currentTimeMillis();
+            mainFunction.accept(gameTime);
+            componentList.forEach(f->updateComponent(f,gameTime));
             draw();
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 LOG.info("Main engine thread interrupted. {}", e);
             }
-            lastTime=System.currentTimeMillis();
+
         }
     }
 
+    private void updateComponent(Component targComponent, long gameTime){
+        targComponent.update(gameTime);
+        for (Component component : targComponent.getComponents()) {
+            updateComponent(component,gameTime);
+        }
+    }
 
     private void draw(){
         BufferStrategy strat = canvas.getBufferStrategy();
@@ -125,15 +144,15 @@ public class Screen extends Thread {
             for (int y = 0; y < component.getHeight(); y++) {
                 int lX = x*font.getCharWidth()+offsetX;
                 int lY = y*font.getCharHeight()+offsetY;
-                //font.draw(component.getTileCharacter(x,y),lX,lY + offsetY,Color.red,Color.GREEN,g);
                 font.draw(component.getTiles()[x][y],lX,lY,g);
             }
         }
+        component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
         component.getComponents().forEach(child -> drawComponent(child,g));
     }
 
     private void startup(){
-        frame = new Frame("");
+        frame = new Frame(windowTitle);
         frame.setResizable(false);
         frame.setLayout(new FlowLayout());
         frame.setLocationRelativeTo(null);
@@ -163,19 +182,35 @@ public class Screen extends Thread {
         canvas.addMouseListener(new LocalMouseHandler());
         canvas.addMouseMotionListener(new LocalMouseMotionListener());
         canvas.addKeyListener(new LocalKeyHandler());
+        EventQueueManager.instance().subscribeQueue(EventQueueManager.guiEventQueue,new InternalEventHandler());
+    }
+
+    public void shutdown(){
+        RUNNING=false;
+    }
+    public Point translateToGrid(Point point){
+        return new Point(point.x/font.charWidth,point.y/font.charHeight);
     }
     private Dimension calculateDimension(){
         return new Dimension(dimensions.width*font.charWidth,dimensions.height*font.charHeight);
     }
 
+    private void passKey(int keycode){
+
+    }
     private void setFallbackKeyHandler(EventListener fallbackInputHandler){
 
         this.fallbackKeyHandler = fallbackKeyHandler;
     }
 
-    public Point translateToGrid(Point point){
-        return new Point(point.x/font.charWidth,point.y/font.charHeight);
+    private class InternalEventHandler{
+
+        private void setFocus(GuiEvent.SetFocus event){
+            focusedComponent=event.getComponent();
+        }
     }
+
+
     private Component getHovered() {
         Component hovered = null;
         for (Component component : componentList) {
@@ -200,6 +235,8 @@ public class Screen extends Thread {
     }
 
 
+
+
     private class LocalKeyHandler implements KeyListener {
 
         @Override
@@ -209,7 +246,9 @@ public class Screen extends Thread {
 
         @Override
         public void keyPressed(KeyEvent e) {
-
+            if (focusedComponent != null){
+                focusedComponent.keyTyped(e);
+            }
         }
 
         @Override
@@ -240,7 +279,7 @@ public class Screen extends Thread {
             for (Component component : componentList) {
                 if (!component.contains(gridPoint))
                     continue;
-                if (component.mouseClicked(gridPoint,e.getButton()))
+                if (component.mouseClicked(PointUtilities.makeRelative(gridPoint,component.getLocation()),e.getButton()))
                     return;
             }
         }
