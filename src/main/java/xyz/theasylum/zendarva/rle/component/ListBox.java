@@ -57,15 +57,27 @@ public class ListBox extends Component {
         }
 
         for (int i = 1; i < Math.min(dimension.height - 1, entries.size() + 1); i++) {
-            drawText(1, i, entries.get(i - 1), palette.getTextForeground(), palette.getTextBackground(), dimension.width - 2);
+            drawText(1, i, entries.get(i - 1+drawOffset), palette.getTextForeground(), palette.getTextBackground(), dimension.width - 2);
         }
 
-        if (selected != -1) {
+        if (selected != -1 && selected >= drawOffset) {
             int y = selected - drawOffset +1;
             for (int x = 1; x < dimension.width - 1; x++) {
                 setTileForeground(x, y, palette.getSelectionForeground());
                 setTileBackground(x, y, palette.getSelectionBackground());
             }
+        }
+
+        if (entries.size() > dimension.height -2){
+            //Scrolling!
+            setTileCharacter(dimension.width-1,0,'▲');
+            setTileForeground(dimension.width-1,0,palette.getArrowForeground());
+            setTileBackground(dimension.width-1,0,palette.getArrowBackground());
+
+            setTileCharacter(dimension.width-1,dimension.height-1,'▼');
+            setTileForeground(dimension.width-1,dimension.height-1,palette.getArrowForeground());
+            setTileBackground(dimension.width-1,dimension.height-1,palette.getArrowBackground());
+
         }
         isDirty = false;
     }
@@ -74,6 +86,25 @@ public class ListBox extends Component {
     public boolean mouseClicked(Point position, int button) {
         if (super.mouseClicked(position, button))
             return true;
+
+        if (entries.size() > dimension.height){
+            if (position.x == dimension.width-1 && position.y==0) { //Up arrow.
+                drawOffset = Math.max(drawOffset-1,0);
+                this.setDirty();
+                return true;
+            }
+            if (position.x == dimension.width-1 && position.y==dimension.height-1) { //Down arrow.
+                drawOffset = Math.min(drawOffset+1,entries.size()-(dimension.height-2));
+                this.setDirty();
+                return true;
+            }
+        }
+
+
+        if (position.y ==0 || position.y == dimension.height-1 ||
+        position.x == 0 || position.x ==dimension.width-1){
+            return true;
+        }
 
         int possiblySelected = drawOffset + position.y;
         if (entries.size() + 1 <= possiblySelected) {

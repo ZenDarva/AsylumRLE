@@ -20,7 +20,8 @@ public abstract class Component extends TileGrid implements EventListener {
     protected Rectangle rect;
 
     @Getter @Setter Consumer<Component> onChanged;
-    @Getter @Setter Boolean visible=true;
+    @Getter @Setter boolean visible=true;
+    @Getter @Setter boolean enabled=true;
 
     protected boolean isDirty = true;
 
@@ -59,6 +60,8 @@ public abstract class Component extends TileGrid implements EventListener {
     @Override
     public boolean mouseClicked(Point position, int button) {
         for (Component component : componentList) {
+            if (!component.isEnabled())
+                continue;
             if (component.contains(PointUtilities.makeRelative(position,component.location))){
                 if (component.mouseClicked(PointUtilities.makeRelative(position,component.location),button))
                         return true;

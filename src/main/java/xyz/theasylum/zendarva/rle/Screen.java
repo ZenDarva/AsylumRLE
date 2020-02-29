@@ -137,7 +137,7 @@ public class Screen extends Thread {
 
     }
     private void drawComponent(Component component, Graphics2D g){
-        if (!component.getVisible()){
+        if (!component.isVisible()){
             return;
         }
         int offsetX=component.getLocation().x * font.getCharWidth();
@@ -280,7 +280,9 @@ public class Screen extends Thread {
 
             Point gridPoint = translateToGrid(e.getPoint());
             for (Component component : componentList) {
-                if (!component.contains(gridPoint))
+                if (!component.isEnabled())
+                    continue;
+                if (!component.contains(PointUtilities.makeRelative(gridPoint,component.getLocation())))
                     continue;
                 if (component.mouseClicked(PointUtilities.makeRelative(gridPoint,component.getLocation()),e.getButton()))
                     return;
@@ -309,6 +311,9 @@ public class Screen extends Thread {
         public void mouseMoved(MouseEvent e) {
             mouseLoc = translateToGrid(e.getPoint());
             Component newHovered = getHovered();
+            if (newHovered!= null && !newHovered.isEnabled()){
+                newHovered=null;
+            }
             if (newHovered != hovered){
                 if (hovered !=null)
                     hovered.mouseLeft();

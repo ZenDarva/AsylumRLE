@@ -11,5 +11,7 @@ public class ListBoxPalette extends Palette {
     @Getter @Setter Color textBackground;
     @Getter @Setter Color selectionBackground;
     @Getter @Setter Color selectionForeground;
+    @Getter @Setter Color arrowForeground;
+    @Getter @Setter Color arrowBackground;
 
 }

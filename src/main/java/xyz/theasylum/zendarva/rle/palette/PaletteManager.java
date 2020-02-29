@@ -50,6 +50,8 @@ public class PaletteManager {
         lbp.textBackground=Color.BLACK;
         lbp.selectionForeground=Color.BLACK;
         lbp.selectionBackground=Color.GREEN.darker();
+        lbp.arrowBackground=Color.GREEN;
+        lbp.arrowForeground=Color.BLACK;
         newPalette.put(lbp.getClass().getSimpleName(),lbp);
     }
 

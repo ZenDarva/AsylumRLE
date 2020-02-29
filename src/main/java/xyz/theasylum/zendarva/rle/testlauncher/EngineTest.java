@@ -46,6 +46,14 @@ public class EngineTest {
 
         screen.addComponent(spinner);
 
+        button.setEnabled(false);
+        ListBox lb = new ListBox(new Dimension(10,10));
+        lb.setLocation(new Point(50,0));
+        screen.addComponent(lb);
+        for (int i = 0; i < 15; i++) {
+            lb.addEntry("Entry"+i);
+        }
+
         screen.startEngine();
 //        Screen screen = new Screen(EngineTest::processGame);
 //        System.out.println("Success!");
