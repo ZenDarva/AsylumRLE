@@ -3,6 +3,7 @@ package xyz.theasylum.zendarva.rle.component;
 import lombok.Getter;
 import lombok.Setter;
 import xyz.theasylum.zendarva.rle.event.EventListener;
+import xyz.theasylum.zendarva.rle.palette.Palette;
 import xyz.theasylum.zendarva.rle.utility.PointUtilities;
 
 import java.awt.*;
@@ -10,12 +11,16 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class Component extends TileGrid implements EventListener {
     private List<Component> componentList = new ArrayList<>();
     protected TileGrid tileGrid;
     protected Point location = new Point(0,0);
     protected Rectangle rect;
+
+    @Getter @Setter Consumer<Component> onChanged;
+    @Getter @Setter Boolean visible=true;
 
     protected boolean isDirty = true;
 
@@ -33,7 +38,7 @@ public abstract class Component extends TileGrid implements EventListener {
 
     public void setLocation(Point location) {
         this.location = location;
-        rect = new Rectangle(location.x, location.y, getWidth(),getHeight());
+        rect = new Rectangle(0, 0, getWidth(),getHeight());
     }
 
     public void addComponent(Component component){
@@ -81,7 +86,21 @@ public abstract class Component extends TileGrid implements EventListener {
 
     }
 
+    protected void drawText(int x, int y, String text, Color foreground, Color background, int maxLength){
+        for (int i = 0; i < Math.min(maxLength,text.length()); i++) {
+            setTileCharacter(x+i,y,text.charAt(i));
+            setTileBackground(x+i,y,background);
+            setTileForeground(x+i,y,foreground);
+        }
+    }
+
+    protected void drawText(int x, int y, String text, Color foreground, Color background){
+        drawText(x,y,text,foreground,background,text.length());
+    }
+
     protected void setDirty(){
         isDirty=true;
     }
+
+    public abstract Palette getPalette();
 }

@@ -4,6 +4,7 @@ import xyz.theasylum.zendarva.rle.Tile;
 import xyz.theasylum.zendarva.rle.event.EventQueue;
 import xyz.theasylum.zendarva.rle.event.EventQueueManager;
 import xyz.theasylum.zendarva.rle.event.event.GuiEvent;
+import xyz.theasylum.zendarva.rle.palette.Palette;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -156,5 +157,10 @@ public class TextEntry extends Component {
         if (event.getComponent() != this && this.isFocused == true){
             this.isFocused=false;
         }
+    }
+
+    @Override
+    public Palette getPalette() {
+        return null;
     }
 }

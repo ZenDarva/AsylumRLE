@@ -42,6 +42,15 @@ public class PaletteManager {
         lp.background=Color.black;
         lp.foreground=Color.GREEN;
         newPalette.put(lp.getClass().getSimpleName(),lp);
+
+        ListBoxPalette lbp = new ListBoxPalette();
+        lbp.foreground=Color.GREEN;
+        lbp.background=new Color(0,0,0,0);
+        lbp.textForeground=Color.GREEN;
+        lbp.textBackground=Color.BLACK;
+        lbp.selectionForeground=Color.BLACK;
+        lbp.selectionBackground=Color.GREEN.darker();
+        newPalette.put(lbp.getClass().getSimpleName(),lbp);
     }
 
     public static PaletteManager getInstance(){
@@ -64,17 +73,11 @@ public class PaletteManager {
         return (T) paletteData.get(palette).get(targName);
 
     }
-    //Rewrite as a generic?
-//    public Palette getPalette(String palette, Class<? extends Palette> targClass){
-//        String targName=targClass.getSimpleName();
-//        if (!paletteData.containsKey(palette)){
-//            LOG.error("Request for nonexistant palette: {}",palette);
-//            return null;
-//        }
-//        if (!paletteData.get(palette).containsKey(targName)){
-//            LOG.error("Request for nonexistant palette object '{}' in palette '{}'",palette);
-//            return null;
-//        }
-//        return paletteData.get(palette).get(targName);
-//    }
+    public Map<String, Palette> getPalette(String palette){
+        if (!paletteData.containsKey(palette)){
+            LOG.error("Request for nonexistant palette: {}",palette);
+            return null;
+        }
+        return paletteData.get(palette);
+    }
 }

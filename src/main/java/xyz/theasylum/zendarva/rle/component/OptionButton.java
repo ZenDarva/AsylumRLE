@@ -1,5 +1,7 @@
 package xyz.theasylum.zendarva.rle.component;
 
+import xyz.theasylum.zendarva.rle.palette.Palette;
+
 import java.awt.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,6 +53,13 @@ public class OptionButton extends Component {
             setTileCharacter(0,0,'○');
         }
         this.checked = checked;
+        if (onChanged !=null){
+            onChanged.accept(this);
+        }
+    }
 
+    @Override
+    public Palette getPalette() {
+        return null;
     }
 }

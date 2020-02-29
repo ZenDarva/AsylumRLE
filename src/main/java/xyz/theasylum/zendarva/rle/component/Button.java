@@ -66,6 +66,11 @@ public class Button extends Component {
     }
 
     @Override
+    public Palette getPalette() {
+        return palette;
+    }
+
+    @Override
     public void update(Long time) {
         if (!isDirty)
             return;

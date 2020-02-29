@@ -1,6 +1,6 @@
 package xyz.theasylum.zendarva.rle.component;
 
-import org.omg.CORBA.WStringValueHelper;
+import lombok.Getter;
 import xyz.theasylum.zendarva.rle.palette.NumberSpinnerPalette;
 import xyz.theasylum.zendarva.rle.palette.Palette;
 import xyz.theasylum.zendarva.rle.palette.PaletteManager;
@@ -11,7 +11,7 @@ public class NumberSpinner extends Component {
 
     private int max;
     private int min;
-    private int value;
+    @Getter private int value;
     private NumberSpinnerPalette palette;
 
     //▲▼
@@ -23,7 +23,9 @@ public class NumberSpinner extends Component {
 
         this.max = max;
         this.min = min;
-        String strValue = String.valueOf(value);
+        int maxLength = String.valueOf(max).length();
+        String formatString = "%0" + maxLength + "d";
+        String strValue = String.format(formatString, value);
         for (int y = 0; y < dimension.height; y++) {
             for (int x = 0; x < dimension.width; x++) {
                 if (y == 0) {
@@ -93,6 +95,22 @@ public class NumberSpinner extends Component {
         else
             value = Math.max(value - toAdd, min);
         setDirty();
+        if (onChanged != null) {
+            onChanged.accept(this);
+        }
         return true;
+    }
+
+    @Override
+    public Palette getPalette() {
+        return palette;
+    }
+
+    public void setValue(int value){
+        this.value=Math.min(value,max);
+        if (onChanged != null) {
+            onChanged.accept(this);
+        }
+        setDirty();
     }
 }

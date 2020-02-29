@@ -137,6 +137,9 @@ public class Screen extends Thread {
 
     }
     private void drawComponent(Component component, Graphics2D g){
+        if (!component.getVisible()){
+            return;
+        }
         int offsetX=component.getLocation().x * font.getCharWidth();
         int offsetY=component.getLocation().y * font.getCharHeight();
 
@@ -214,7 +217,7 @@ public class Screen extends Thread {
     private Component getHovered() {
         Component hovered = null;
         for (Component component : componentList) {
-            if (component.contains(mouseLoc)){
+            if (component.contains(PointUtilities.makeRelative(mouseLoc,component.getLocation()))){
                 hovered = getHoveredChild(component);
                 break;
             }
@@ -225,7 +228,7 @@ public class Screen extends Thread {
     private Component getHoveredChild(Component targComponent){
         Component hovered = null;
         for (Component component : targComponent.getComponents()) {
-            if (component.contains(mouseLoc)){
+            if (component.contains(PointUtilities.makeRelative(mouseLoc,component.getLocation()))){
                 hovered = getHoveredChild(component);
             }
         }
