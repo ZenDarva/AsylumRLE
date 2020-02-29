@@ -34,8 +34,8 @@ public class PaletteManager {
         NumberSpinnerPalette nsp = new NumberSpinnerPalette();
         nsp.foreground=Color.GREEN;
         nsp.background=Color.black;
-        nsp.ArrowForeground=Color.darkGray;
-        nsp.ArrowBackground=new Color(0,0,0,0);
+        nsp.arrowForeground =Color.darkGray;
+        nsp.arrowBackground =new Color(0,0,0,0);
         newPalette.put(nsp.getClass().getSimpleName(),nsp);
 
         LayerPalette lp = new LayerPalette();
@@ -53,6 +53,13 @@ public class PaletteManager {
         lbp.arrowBackground=Color.GREEN;
         lbp.arrowForeground=Color.BLACK;
         newPalette.put(lbp.getClass().getSimpleName(),lbp);
+
+        OptionButtonPalette obp = new OptionButtonPalette();
+        obp.foreground=Color.GREEN;
+        obp.background=Color.BLACK;
+        obp.boxBackground=Color.BLACK;
+        obp.boxForeground=Color.GREEN;
+        newPalette.put(obp.getClass().getSimpleName(), obp);
     }
 
     public static PaletteManager getInstance(){

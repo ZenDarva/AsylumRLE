@@ -6,6 +6,6 @@ import lombok.Setter;
 import java.awt.*;
 
 public class NumberSpinnerPalette extends Palette {
-    @Getter @Setter Color ArrowForeground;
-    @Getter @Setter Color ArrowBackground;
+    @Getter @Setter Color arrowForeground;
+    @Getter @Setter Color arrowBackground;
 }

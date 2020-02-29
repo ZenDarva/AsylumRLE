@@ -4,11 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import xyz.theasylum.zendarva.rle.Screen;
+import xyz.theasylum.zendarva.rle.component.*;
 import xyz.theasylum.zendarva.rle.component.Button;
 import xyz.theasylum.zendarva.rle.component.Component;
-import xyz.theasylum.zendarva.rle.component.Layer;
-import xyz.theasylum.zendarva.rle.component.ListBox;
-import xyz.theasylum.zendarva.rle.component.NumberSpinner;
 import xyz.theasylum.zendarva.rle.palette.Palette;
 import xyz.theasylum.zendarva.rle.palette.PaletteManager;
 import xyz.theasylum.zendarva.rle.testlauncher.EngineTest;
@@ -32,44 +30,45 @@ public class PaletteEditor {
     static Button saveButton;
     static Button loadButton;
     static Button resetButton;
+    static Button newButton;
 
     public static void main(String[] args){
 
 
-        Screen screen = new Screen(new Dimension(80,40), PaletteEditor::processTick);
+        Screen screen = new Screen(new Dimension(76,18), PaletteEditor::processTick);
 
-        backLayer = new Layer(new Dimension(80,40), new Point(0,0));
+        backLayer = new Layer(new Dimension(76,40), new Point(0,0));
 
 
-        controlLayer = new Layer(new Dimension(40,20),new Point(0,0));
+        controlLayer = new Layer(new Dimension(30,14),new Point(0,0));
 
-        for (int x = 0; x < 40; x++) {
+        for (int x = 0; x < controlLayer.getWidth(); x++) {
             controlLayer.setTileCharacter(x,0,'█');
-            controlLayer.setTileCharacter(x,19,'█');
+            controlLayer.setTileCharacter(x,13,'█');
         }
 
-        for (int y = 0; y < 20; y++) {
+        for (int y = 0; y < controlLayer.getHeight(); y++) {
             controlLayer.setTileCharacter(0,y,'█');
-            controlLayer.setTileCharacter(39,y,'█');
+            controlLayer.setTileCharacter(29,y,'█');
         }
         backLayer.addComponent(controlLayer);
 
 
         redNS = new NumberSpinner(255,0,0);
-        redNS.setLocation(new Point(42,10));
+        redNS.setLocation(new Point(2,15));
         redNS.setOnChanged(PaletteEditor::onNumberSpinnerChange);
 
 
         greenNS = new NumberSpinner(255,0,0);
-        greenNS.setLocation(new Point(46,10));
+        greenNS.setLocation(new Point(6,15));
         greenNS.setOnChanged(PaletteEditor::onNumberSpinnerChange);
 
         blueNS = new NumberSpinner(255,0,0);
-        blueNS.setLocation(new Point(50,10));
+        blueNS.setLocation(new Point(10,15));
         blueNS.setOnChanged(PaletteEditor::onNumberSpinnerChange);
 
         alphaNS = new NumberSpinner(255,0,255);
-        alphaNS.setLocation(new Point(54,10));
+        alphaNS.setLocation(new Point(14,15));
         alphaNS.setOnChanged(PaletteEditor::onNumberSpinnerChange);
 
         backLayer.addComponent(redNS);
@@ -79,24 +78,30 @@ public class PaletteEditor {
 
 
         backLayer.addComponent(createPaletteEntryList());
-        paletteDetailListBox = new ListBox(new Dimension(20,15));
-        paletteDetailListBox.setLocation(new Point(58,21));
+
+        paletteDetailListBox = new ListBox(new Dimension(22,13));
+        paletteDetailListBox.setLocation(new Point(54,5));
         paletteDetailListBox.setVisible(false);
         paletteDetailListBox.setOnSelectionChanged(PaletteEditor::onDetailListSelectionChanged);
         backLayer.addComponent(paletteDetailListBox);
 
         saveButton = new Button(new Dimension(10,3),"Save");
-        saveButton.setLocation(new Point(42,1));
+        saveButton.setLocation(new Point(66,1));
         saveButton.setOnClick(PaletteEditor::onSavePressed);
         backLayer.addComponent(saveButton);
 
         resetButton = new Button(new Dimension(10,3),"Reset");
-        resetButton.setLocation(new Point(53,1));
+        resetButton.setLocation(new Point(42,1));
         resetButton.setOnClick(PaletteEditor::OnResetPressed);
         backLayer.addComponent(resetButton);
 
+        newButton = new Button(new Dimension(10,3),"New");
+        newButton.setLocation(new Point(31,1));
+        newButton.setOnClick(PaletteEditor::OnNewPressed);
+        backLayer.addComponent(newButton);
+
         loadButton = new Button(new Dimension(10,3),"Load");
-        loadButton.setLocation(new Point(64,1));
+        loadButton.setLocation(new Point(55,1));
         backLayer.addComponent(loadButton);
 
         screen.addComponent(backLayer);
@@ -111,8 +116,8 @@ public class PaletteEditor {
 
     private static ListBox createPaletteEntryList(){
 
-        controlListBox = new ListBox(new Dimension(20,15));
-        controlListBox.setLocation(new Point(58, 5));
+        controlListBox = new ListBox(new Dimension(22,13));
+        controlListBox.setLocation(new Point(31, 5));
         controlListBox.addEntry("Button");
         controlListBox.addEntry("Layer");
         controlListBox.addEntry("ListBox");
@@ -139,9 +144,8 @@ public class PaletteEditor {
 
     public static void onNumberSpinnerChange(Component ns){
         Color newColor = new Color(redNS.getValue(),greenNS.getValue(),blueNS.getValue(),alphaNS.getValue());
-
-        for (int x = 42; x < 57; x++) {
-            for (int y = 5; y < 7; y++) {
+        for (int x = 18; x < 30; x++) {
+            for (int y = 15; y < 18; y++) {
                 backLayer.setTileBackground(x,y,newColor);
             }
         }
@@ -195,6 +199,19 @@ public class PaletteEditor {
                 lb.addEntry("Sample Three");
                 configureDetailList(lb.getPalette());
                 break;
+            case "NumberSpinner":
+                NumberSpinner ns = new NumberSpinner(2000,0,128);
+                ns.setLocation(new Point (controlLayer.getWidth()/2 - 2,controlLayer.getHeight()/2-3));
+                componentEditing=ns;
+                controlLayer.addComponent(ns);
+                configureDetailList(ns.getPalette());
+                break;
+            case "OptionButton":
+                OptionButton ob = new OptionButton(new Dimension(10,1),"Example");
+                ob.setLocation(new Point (controlLayer.getWidth()/2 - 2,controlLayer.getHeight()/2));
+                componentEditing=ob;
+                controlLayer.addComponent(ob);
+                configureDetailList(ob.getPalette());
             default:
 
         }
@@ -249,4 +266,9 @@ public class PaletteEditor {
     private static void OnLoadPressed(Point point, Integer button) {
 
     }
+
+    private static void OnNewPressed(Point point, Integer btn) {
+
+    }
+
 }
