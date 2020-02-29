@@ -5,6 +5,8 @@ import xyz.theasylum.zendarva.rle.event.EventQueue;
 import xyz.theasylum.zendarva.rle.event.EventQueueManager;
 import xyz.theasylum.zendarva.rle.event.event.GuiEvent;
 import xyz.theasylum.zendarva.rle.palette.Palette;
+import xyz.theasylum.zendarva.rle.palette.PaletteManager;
+import xyz.theasylum.zendarva.rle.palette.TextEntryPalette;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -18,19 +20,17 @@ public class TextEntry extends Component {
     private boolean isFocused;
     char[] text;
     long flashCounter=0;
+    TextEntryPalette palette;
 
     public TextEntry(Dimension dimension) {
         super(dimension);
-        for (int x = 0; x < dimension.width; x++) {
-            for (int y = 0; y < dimension.height; y++) {
-                setTileBackground(x,y,Color.white);
-                setTileForeground(x,y,Color.BLACK);
-            }
-        }
+        palette = PaletteManager.getInstance().getPalette("default",TextEntryPalette.class);
+
+
+
         caret = new Tile();
         caret.setCharacter('_');
-        caret.setForeground(Color.BLACK);
-        caret.setBackground(new Color(0,128,0,128));
+
         text = new char[dimension.width];
         for (int i = 0; i < text.length; i++) {
             text[i]=' ';
@@ -137,10 +137,21 @@ public class TextEntry extends Component {
 
     @Override
     public void update(Long time) {
+        flashCounter+=time;
+        if (!isDirty)
+            return;
         for (int i = 0; i < dimension.width; i++) {
             setTileCharacter(i,0,text[i]);
         }
-        flashCounter+=time;
+        for (int x = 0; x < dimension.width; x++) {
+            for (int y = 0; y < dimension.height; y++) {
+                setTileBackground(x,y,palette.getBackground());
+                setTileForeground(x,y,palette.getForeground());
+            }
+        }
+        caret.setForeground(palette.getCaretForeground());
+        caret.setBackground(palette.getCaretBackground());
+
     }
 
     @Override
@@ -159,8 +170,17 @@ public class TextEntry extends Component {
         }
     }
 
+    public void setText(String newText){
+        for (int i = 0; i < text.length; i++) {
+            if (i < newText.length())
+                text[i]= newText.charAt(i);
+            else
+                text[i]=' ';
+        }
+    }
+
     @Override
     public Palette getPalette() {
-        return null;
+        return palette;
     }
 }

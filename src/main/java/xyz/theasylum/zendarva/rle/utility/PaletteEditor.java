@@ -31,13 +31,15 @@ public class PaletteEditor {
     static Button loadButton;
     static Button resetButton;
     static Button newButton;
+    static String paletteEditing= "default";
+    static Screen screen;
 
     public static void main(String[] args){
 
 
-        Screen screen = new Screen(new Dimension(76,18), PaletteEditor::processTick);
+        screen = new Screen(new Dimension(76,18), PaletteEditor::processTick);
 
-        backLayer = new Layer(new Dimension(76,40), new Point(0,0));
+        backLayer = new Layer(new Dimension(76,18), new Point(0,0));
 
 
         controlLayer = new Layer(new Dimension(30,14),new Point(0,0));
@@ -212,6 +214,15 @@ public class PaletteEditor {
                 componentEditing=ob;
                 controlLayer.addComponent(ob);
                 configureDetailList(ob.getPalette());
+                break;
+            case "TextEntry":
+                TextEntry te = new TextEntry(new Dimension(10,1));
+                te.setLocation(new Point (controlLayer.getWidth()/2 - 2,controlLayer.getHeight()/2));
+                te.setText("Example");
+                componentEditing=te;
+                controlLayer.addComponent(te);
+                configureDetailList(te.getPalette());
+                break;
             default:
 
         }
@@ -268,7 +279,32 @@ public class PaletteEditor {
     }
 
     private static void OnNewPressed(Point point, Integer btn) {
+        if (btn == 1){
+            newPopup();
+        }
+    }
 
+    private static void newPopup(){
+        backLayer.setEnabled(false);
+        Layer popupLayer = new Layer(new Dimension(30,10));
+        popupLayer.setLocation(new Point(backLayer.getWidth()/2 - popupLayer.getWidth()/2, backLayer.getHeight()/2 - popupLayer.getHeight()/2));
+        screen.addComponent(popupLayer);
+        //popupLayer.getPalette().setForeground(Color.GREEN.darker().darker());
+        for (int x = 0; x < popupLayer.getWidth(); x++) {
+            popupLayer.setTileCharacter(x,0,'█');
+            popupLayer.setTileCharacter(x,popupLayer.getHeight()-1,'█');
+        }
+
+        for (int y = 0; y < popupLayer.getHeight(); y++) {
+            popupLayer.setTileCharacter(0,y,'█');
+            popupLayer.setTileCharacter(popupLayer.getWidth()-1,y,'█');
+        }
+        int x = popupLayer.getWidth()/2 - 2;
+        popupLayer.drawText(x,0,"New",popupLayer.getPalette().getForeground(),popupLayer.getPalette().getForeground());
+        popupLayer.drawText(1,popupLayer.getHeight()/2,"Name",popupLayer.getPalette().getForeground(),popupLayer.getPalette().getForeground());
+        TextEntry te = new TextEntry(new Dimension(15,1));
+        te.setLocation(new Point(6,popupLayer.getHeight()/2));
+        popupLayer.addComponent(te);
     }
 
 }

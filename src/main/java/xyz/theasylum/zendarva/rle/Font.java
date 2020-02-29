@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Font {
@@ -34,50 +35,62 @@ public class Font {
     protected Map<Character, Rectangle> fontMap;
 
 
-    Cache<Integer, Image> tintCache;
+    Cache<Tile.TileTransform, Map<Integer, Image>> tintCache;
 
-    public Font (FontGenerator fg){
-        fontTexture=fg.finalImage;
-        fontMap=fg.fontMap;
+
+    public Font(FontGenerator fg) {
+        fontTexture = fg.finalImage;
+        fontMap = fg.fontMap;
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
-        charWidth=fg.charWidth;
-        charHeight=fg.charHeight;
+        charWidth = fg.charWidth;
+        charHeight = fg.charHeight;
     }
 
     public Font(String jarFont, float size) throws MissingFont {
         FontGenerator fg = new FontGenerator(jarFont, size);
-        fontTexture=fg.finalImage;
-        fontMap=fg.fontMap;
+        fontTexture = fg.finalImage;
+        fontMap = fg.fontMap;
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
-        charWidth=fg.charWidth;
-        charHeight=fg.charHeight;
+        charWidth = fg.charWidth;
+        charHeight = fg.charHeight;
     }
 
 
     public Font(File fontFile, float size) throws MissingFont {
         FontGenerator fg = new FontGenerator(fontFile, size);
-        fontTexture=fg.finalImage;
-        fontMap=fg.fontMap;
+        fontTexture = fg.finalImage;
+        fontMap = fg.fontMap;
         tintCache = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(1, TimeUnit.MINUTES).build();
-        charWidth=fg.charWidth;
-        charHeight=fg.charHeight;
+        charWidth = fg.charWidth;
+        charHeight = fg.charHeight;
     }
 
 
     public void draw(Tile tile, int x, int y, Graphics g) {
+        draw(tile, x, y, g, Tile.none);
+    }
+
+    public void draw(Tile tile, int x, int y, Graphics g, Tile.TileTransform transform) {
         if (tile.getCharacter() == 0)
             return;
-        Image glyph = getGlyph(tile);
+        Image glyph = getGlyph(tile, transform);
         Rectangle rect = fontMap.get(tile.getCharacter());
-
-        g.setColor(tile.getBackground());
+        g.setColor(transform.transform(tile.getBackground()));
         g.drawImage(glyph, x, y, null);
     }
 
     private Image getGlyph(Tile tile) {
-        Image glyph = tintCache.getIfPresent(tile.hashCode());
-        if (glyph != null) {
-            return glyph;
+        return getGlyph(tile, Tile.none);
+    }
+
+    private Image getGlyph(Tile tile, Tile.TileTransform transform) {
+        Image glyph;
+        Map tintMap = tintCache.getIfPresent(transform);
+        if (tintMap != null) {
+            glyph = tintCache.getIfPresent(transform).get(tile.hashCode());
+            if (glyph != null) {
+                return glyph;
+            }
         }
         glyph = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = (Graphics2D) glyph.getGraphics();
@@ -88,10 +101,14 @@ public class Font {
 
         g.drawImage(fontTexture, 0, 0, rect.width, rect.height, rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, null);
         Color foreColor = new Color(tile.getForeground().getRed(), tile.getForeground().getGreen(), tile.getForeground().getBlue(), tile.getBackground().getAlpha());
+        foreColor = transform.transform(foreColor);
         g.setXORMode(foreColor);
         g.drawImage(fontTexture, 0, 0, rect.width, rect.height, rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, null);
         g.dispose();
-        tintCache.put(tile.hashCode(), glyph);
+        if (tintCache.getIfPresent(transform) == null) {
+            tintCache.put(transform, new HashMap<>());
+        }
+        tintCache.getIfPresent(transform).put(tile.hashCode(), glyph);
         return glyph;
     }
 
@@ -104,7 +121,7 @@ public class Font {
         }
         InputStreamReader isr = new InputStreamReader(stream);
         BufferedReader reader = new BufferedReader(isr);
-        processFontFileLines(reader.lines().filter(line->line.startsWith("char ")).collect(Collectors.toList()),resourceName);
+        processFontFileLines(reader.lines().filter(line -> line.startsWith("char ")).collect(Collectors.toList()), resourceName);
     }
 
     private void loadFontFile(File file) throws IOException, MissingFont {
@@ -114,7 +131,7 @@ public class Font {
         }
 
         List<String> lines = Files.lines(file.toPath()).filter(line -> line.startsWith("char ")).collect(Collectors.toList());
-        processFontFileLines(lines,file.getName());
+        processFontFileLines(lines, file.getName());
     }
 
     private void processFontFileLines(List<String> lines, String file) {

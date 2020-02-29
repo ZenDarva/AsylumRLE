@@ -89,7 +89,7 @@ public abstract class Component extends TileGrid implements EventListener {
 
     }
 
-    protected void drawText(int x, int y, String text, Color foreground, Color background, int maxLength){
+    public void drawText(int x, int y, String text, Color foreground, Color background, int maxLength){
         for (int i = 0; i < Math.min(maxLength,text.length()); i++) {
             setTileCharacter(x+i,y,text.charAt(i));
             setTileBackground(x+i,y,background);
@@ -97,7 +97,7 @@ public abstract class Component extends TileGrid implements EventListener {
         }
     }
 
-    protected void drawText(int x, int y, String text, Color foreground, Color background){
+    public void drawText(int x, int y, String text, Color foreground, Color background){
         drawText(x,y,text,foreground,background,text.length());
     }
 

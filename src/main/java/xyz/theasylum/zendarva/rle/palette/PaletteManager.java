@@ -60,6 +60,14 @@ public class PaletteManager {
         obp.boxBackground=Color.BLACK;
         obp.boxForeground=Color.GREEN;
         newPalette.put(obp.getClass().getSimpleName(), obp);
+
+        TextEntryPalette tep = new TextEntryPalette();
+        tep.caretBackground= new Color(0,128,0,128);
+        tep.caretForeground=Color.black;
+        tep.foreground=Color.BLACK;
+        tep.background=Color.GREEN.darker();
+        newPalette.put(tep.getClass().getSimpleName(),tep);
+
     }
 
     public static PaletteManager getInstance(){

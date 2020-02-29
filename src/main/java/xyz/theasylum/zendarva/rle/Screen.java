@@ -19,7 +19,9 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import static xyz.theasylum.zendarva.rle.Tile.darken;
 
 
 public class Screen extends Thread {
@@ -127,7 +129,10 @@ public class Screen extends Thread {
             //Component list is stored newest to oldest for control interactions, but should be drawn
             //oldest to newest.
             for (int i = componentList.size() - 1; i >= 0; i--) {
-                this.drawComponent(componentList.get(i),g);
+                if (componentList.get(i).isEnabled())
+                    this.drawComponent(componentList.get(i), new Point(0,0),g,null);
+                else
+                    this.drawComponent(componentList.get(i), new Point(0,0),g, darken);
             }
 
 
@@ -136,22 +141,32 @@ public class Screen extends Thread {
         strat.show();
 
     }
-    private void drawComponent(Component component, Graphics2D g){
+    private void drawComponent(Component component, Point offset, Graphics2D g, Tile.TileTransform transform){
         if (!component.isVisible()){
             return;
         }
-        int offsetX=component.getLocation().x * font.getCharWidth();
-        int offsetY=component.getLocation().y * font.getCharHeight();
+        if (!component.isEnabled() && transform !=darken)
+            transform = darken;
+
+        int offsetX=offset.x * font.getCharWidth() + component.getLocation().x *font.getCharWidth();
+        int offsetY=offset.y * font.getCharHeight() + component.getLocation().y * font.getCharHeight();
+
+
 
         for (int x = 0; x < component.getWidth(); x++) {
             for (int y = 0; y < component.getHeight(); y++) {
                 int lX = x*font.getCharWidth()+offsetX;
                 int lY = y*font.getCharHeight()+offsetY;
-                font.draw(component.getTiles()[x][y],lX,lY,g);
+                if (transform!=null)
+                    font.draw(component.getTiles()[x][y], lX, lY, g, transform);
+                else
+                    font.draw(component.getTiles()[x][y], lX, lY, g);
             }
         }
         component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
-        component.getComponents().forEach(child -> drawComponent(child,g));
+        for (Component child : component.getComponents()) {
+            drawComponent(child,component.getLocation(),g,transform);
+        }
     }
 
     private void startup(){
@@ -217,6 +232,8 @@ public class Screen extends Thread {
     private Component getHovered() {
         Component hovered = null;
         for (Component component : componentList) {
+            if (!component.isEnabled())
+                continue;
             if (component.contains(PointUtilities.makeRelative(mouseLoc,component.getLocation()))){
                 hovered = getHoveredChild(component);
                 break;
@@ -228,6 +245,8 @@ public class Screen extends Thread {
     private Component getHoveredChild(Component targComponent){
         Component hovered = null;
         for (Component component : targComponent.getComponents()) {
+            if (!component.isEnabled())
+                continue;
             if (component.contains(PointUtilities.makeRelative(mouseLoc,component.getLocation()))){
                 hovered = getHoveredChild(component);
             }
