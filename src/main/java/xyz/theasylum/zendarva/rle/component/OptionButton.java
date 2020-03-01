@@ -10,19 +10,28 @@ import java.util.List;
 
 public class OptionButton extends Component {
     private final String text;
+    private String paletteGroup;
     private boolean checked;
     private List<OptionButton> peers;
     private OptionButtonPalette palette;
     //○●
     public OptionButton(Dimension dimension, String text) {
+        this(dimension,text,"default");
+    }
+
+    public OptionButton(Dimension dimension, String text, String paletteGroup) {
         super(dimension);
         this.text = text;
+        this.paletteGroup = paletteGroup;
         peers = new LinkedList<>();
-        palette= PaletteManager.getInstance().getPalette("default",OptionButtonPalette.class);
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,OptionButtonPalette.class);
     }
 
     @Override
     public void update(Long time) {
+        if (!isDirty)
+            return;
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,OptionButtonPalette.class);
         setTileForeground(0,0,palette.getBoxForeground());
         setTileBackground(0,0,palette.getBoxBackground());
         if (checked)
@@ -52,6 +61,7 @@ public class OptionButton extends Component {
              return true;
          }
          setChecked(true);
+
          return true;
     }
 
@@ -63,9 +73,11 @@ public class OptionButton extends Component {
         if(checked) {
             peers.forEach(f -> f.setChecked(false));
             setTileCharacter(0, 0, '●');
+            setDirty();
         }
         else {
             setTileCharacter(0,0,'○');
+            setDirty();
         }
         this.checked = checked;
         if (onChanged !=null){

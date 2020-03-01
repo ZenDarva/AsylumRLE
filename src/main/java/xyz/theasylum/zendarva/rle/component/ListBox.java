@@ -17,11 +17,16 @@ public class ListBox extends Component {
     @Setter
     Consumer<String> onSelectionChanged;
     ListBoxPalette palette;
+    private String paletteGroup;
 
-    public ListBox(Dimension dimension) {
+    public ListBox(Dimension dimension, String paletteGroup) {
         super(dimension);
+        this.paletteGroup = paletteGroup;
         entries = new LinkedList<>();
-        palette = PaletteManager.getInstance().getPalette("default", ListBoxPalette.class);
+        palette = PaletteManager.getInstance().getPalette(paletteGroup, ListBoxPalette.class);
+    }
+    public ListBox(Dimension dimension){
+        this(dimension,"default");
     }
 
 
@@ -29,6 +34,7 @@ public class ListBox extends Component {
     public void update(Long time) {
         if (!isDirty)
             return;
+        palette = PaletteManager.getInstance().getPalette(paletteGroup, ListBoxPalette.class);
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
                 setTileBackground(x, y, palette.getTextBackground());
@@ -142,6 +148,10 @@ public class ListBox extends Component {
             return null;
         }
         return entries.get(selected);
+    }
+    public void setSelected(int selected){
+        this.selected= Math.min(Math.max(selected,-1),entries.size());
+        this.setDirty();
     }
 
 }

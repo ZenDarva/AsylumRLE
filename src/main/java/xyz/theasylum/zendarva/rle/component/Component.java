@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class Component extends TileGrid implements EventListener {
+    private final String paletteGroup;
     private List<Component> componentList = new ArrayList<>();
     protected TileGrid tileGrid;
     protected Point location = new Point(0,0);
@@ -29,7 +30,13 @@ public abstract class Component extends TileGrid implements EventListener {
 
 
     public Component(Dimension dimension) {
+        this(dimension,"default");
+
+    }
+    public Component(Dimension dimension, String paletteGroup){
         super(dimension);
+
+        this.paletteGroup = paletteGroup;
         rect = new Rectangle(0, 0, getWidth(),getHeight());
     }
 

@@ -64,7 +64,7 @@ public class FontGenerator {
 
     public FontGenerator(String resourcePath, float size) throws MissingFont {
 
-        InputStream stream = resourcePath.getClass().getResourceAsStream(resourcePath);
+        InputStream stream = this.getClass().getClassLoader().getResourceAsStream(resourcePath);
 
         if (stream == null){
             LOG.error("Attempting to load a non-existant jarFont: {}",resourcePath);

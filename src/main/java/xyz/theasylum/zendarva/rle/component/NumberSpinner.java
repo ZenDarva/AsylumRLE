@@ -11,18 +11,24 @@ public class NumberSpinner extends Component {
 
     private int max;
     private int min;
+    private String paletteGroup;
     @Getter private int value;
     private NumberSpinnerPalette palette;
 
     //▲▼
-    public NumberSpinner(Integer max, int min, int value) {
+    public NumberSpinner(Integer max, int min, int value){
+        this(max,min,value,"default");
+    }
+
+    public NumberSpinner(Integer max, int min, int value, String paletteGroup) {
         super(new Dimension(max.toString().length(), 3));
         this.value = value;
 
-        palette= PaletteManager.getInstance().getPalette("default",NumberSpinnerPalette.class);
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,NumberSpinnerPalette.class);
 
         this.max = max;
         this.min = min;
+        this.paletteGroup = paletteGroup;
         int maxLength = String.valueOf(max).length();
         String formatString = "%0" + maxLength + "d";
         String strValue = String.format(formatString, value);
@@ -51,6 +57,7 @@ public class NumberSpinner extends Component {
     public void update(Long time) {
         if (!isDirty)
             return;
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,NumberSpinnerPalette.class);
         int maxLength = String.valueOf(max).length();
         String formatString = "%0" + maxLength + "d";
         String strValue = String.format(formatString, value);

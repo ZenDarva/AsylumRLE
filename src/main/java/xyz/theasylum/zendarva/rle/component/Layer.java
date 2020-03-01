@@ -16,14 +16,15 @@ public class Layer extends Component {
 
 
 
-    public Layer(Dimension dimension, Point location){
+    public Layer(Dimension dimension, Point location, String paletteGroup){
         super(dimension);
         this.dimension = dimension;
         this.location = location;
         this.tileGrid=new TileGrid(dimension);
-        palette= PaletteManager.getInstance().getPalette("default",LayerPalette.class);
-
-
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,LayerPalette.class);
+    }
+    public Layer(Dimension dimension, Point location) {
+        this(dimension,location,"default");
     }
 
     @Override
@@ -47,5 +48,8 @@ public class Layer extends Component {
         return palette;
     }
 
+    public void setPalette(LayerPalette palette) {
+        this.palette=palette;
+    }
 
 }

@@ -11,11 +11,13 @@ public class Button extends Component {
     private final String text;
     private BiConsumer<Point, Integer> procedure;
     ButtonPalette palette;
+    private String paletteGroup;
 
-    public Button(Dimension dimension, String text) {
+    public Button(Dimension dimension, String text, String paletteGroup) {
         super(dimension);
         this.text = text;
-        palette= PaletteManager.getInstance().getPalette("default",ButtonPalette.class);
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,ButtonPalette.class);
+        this.paletteGroup = paletteGroup;
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
                 this.setTileBackground(x,y,palette.getBackground());
@@ -24,6 +26,10 @@ public class Button extends Component {
         }
         drawText(text,new Point(dimension.width/2 - text.length()/2,dimension.height/2),this);
     }
+    public Button(Dimension dimension, String text){
+        this(dimension,text,"default");
+    }
+
 
     public void setOnClick(BiConsumer<Point, Integer> procedure){
         this.procedure = procedure;
@@ -47,6 +53,8 @@ public class Button extends Component {
 
     @Override
     public void mouseEntered() {
+        //Hack!
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,ButtonPalette.class);
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
                 this.setTileBackground(x,y,palette.getHoverBackground());
@@ -57,6 +65,8 @@ public class Button extends Component {
 
     @Override
     public void mouseLeft() {
+        //Hack!
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,ButtonPalette.class);
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
                 this.setTileBackground(x,y,palette.getBackground());
@@ -74,6 +84,7 @@ public class Button extends Component {
     public void update(Long time) {
         if (!isDirty)
             return;
+        palette= PaletteManager.getInstance().getPalette(paletteGroup,ButtonPalette.class);
         for (int x = 0; x < dimension.width; x++) {
             for (int y = 0; y < dimension.height; y++) {
                 this.setTileBackground(x,y,palette.getBackground());

@@ -21,10 +21,13 @@ public class TextEntry extends Component {
     char[] text;
     long flashCounter=0;
     TextEntryPalette palette;
-
     public TextEntry(Dimension dimension) {
+        this(dimension,"default");
+    }
+
+    public TextEntry(Dimension dimension, String paletteGroup) {
         super(dimension);
-        palette = PaletteManager.getInstance().getPalette("default",TextEntryPalette.class);
+        palette = PaletteManager.getInstance().getPalette(paletteGroup,TextEntryPalette.class);
 
 
 
@@ -177,6 +180,10 @@ public class TextEntry extends Component {
             else
                 text[i]=' ';
         }
+    }
+    public String getText() {
+        return new String(text).replaceAll(" ","");
+
     }
 
     @Override

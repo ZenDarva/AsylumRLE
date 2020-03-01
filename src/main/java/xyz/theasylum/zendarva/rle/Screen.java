@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xyz.theasylum.zendarva.rle.component.Button;
 import xyz.theasylum.zendarva.rle.component.Component;
+import xyz.theasylum.zendarva.rle.event.EventListener;
 import xyz.theasylum.zendarva.rle.event.EventQueueManager;
 import xyz.theasylum.zendarva.rle.event.event.GuiEvent;
 import xyz.theasylum.zendarva.rle.exception.MissingFont;
@@ -16,10 +16,8 @@ import java.awt.event.*;
 import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EventListener;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static xyz.theasylum.zendarva.rle.Tile.darken;
 
@@ -54,7 +52,7 @@ public class Screen extends Thread {
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
         try {
-            font = new Font(new FontGenerator("/Fonts/DejaVuSansMono.ttf",20f));
+            font = new Font(new FontGenerator("Fonts/DejaVuSansMono.ttf",20f));
         } catch (MissingFont missingFont) {
             LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
             System.exit(-1);
@@ -217,12 +215,10 @@ public class Screen extends Thread {
 
     }
     private void setFallbackKeyHandler(EventListener fallbackInputHandler){
-
         this.fallbackKeyHandler = fallbackKeyHandler;
     }
 
     private class InternalEventHandler{
-
         private void setFocus(GuiEvent.SetFocus event){
             focusedComponent=event.getComponent();
         }
@@ -268,15 +264,16 @@ public class Screen extends Thread {
 
         @Override
         public void keyPressed(KeyEvent e) {
-            if (focusedComponent != null){
-                focusedComponent.keyTyped(e);
-            }
+
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_ESCAPE){
-                RUNNING=false;
+            if (focusedComponent != null){
+                focusedComponent.keyTyped(e);
+            }
+            else{
+                fallbackKeyHandler.keyTyped(e);
             }
 
         }
