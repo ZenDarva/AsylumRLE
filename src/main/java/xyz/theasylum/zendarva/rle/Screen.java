@@ -215,7 +215,7 @@ public class Screen extends Thread {
 
     }
     public void setKeyHandler(EventListener fallbackInputHandler){
-        this.fallbackKeyHandler = fallbackKeyHandler;
+        this.fallbackKeyHandler = fallbackInputHandler;
     }
 
     private class InternalEventHandler{
