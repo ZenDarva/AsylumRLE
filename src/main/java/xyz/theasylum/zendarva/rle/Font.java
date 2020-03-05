@@ -95,6 +95,10 @@ public class Font {
         glyph = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = (Graphics2D) glyph.getGraphics();
         Rectangle rect = fontMap.get(tile.getCharacter());
+        if (rect == null){
+            LOG.error("Missing character '{}' in font.", tile.getCharacter());
+            rect = fontMap.get('a');
+        }
         g.setColor(tile.getBackground());
 
         g.fillRect(0, 0, rect.width, rect.height);

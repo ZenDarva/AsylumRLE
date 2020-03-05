@@ -96,6 +96,16 @@ public abstract class Component extends TileGrid implements EventListener {
 
     }
 
+    @Override
+    public boolean keyPressed(KeyEvent keyEvent) {
+        return false;
+    }
+
+    @Override
+    public boolean keyReleased(KeyEvent keyEvent) {
+        return false;
+    }
+
     public void drawText(int x, int y, String text, Color foreground, Color background, int maxLength){
         for (int i = 0; i < Math.min(maxLength,text.length()); i++) {
             setTileCharacter(x+i,y,text.charAt(i));

@@ -52,7 +52,7 @@ public class Screen extends Thread {
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
         try {
-            font = new Font(new FontGenerator("Fonts/DejaVuSansMono.ttf",20f));
+            font = new Font(new FontGenerator("Fonts/PxPlus_IBM_CGAthin.ttf",12f));
         } catch (MissingFont missingFont) {
             LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
             System.exit(-1);
@@ -260,20 +260,34 @@ public class Screen extends Thread {
         @Override
         public void keyTyped(KeyEvent e) {
 
+            if (focusedComponent != null){
+                focusedComponent.keyTyped(e);
+            }
+            else{
+                if (fallbackKeyHandler != null)
+                fallbackKeyHandler.keyTyped(e);
+            }
         }
 
         @Override
         public void keyPressed(KeyEvent e) {
-
+            if (focusedComponent != null){
+                focusedComponent.keyPressed(e);
+            }
+            else{
+                if (fallbackKeyHandler != null)
+                fallbackKeyHandler.keyPressed(e);
+            }
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
             if (focusedComponent != null){
-                focusedComponent.keyTyped(e);
+                focusedComponent.keyReleased(e);
             }
             else{
-                fallbackKeyHandler.keyTyped(e);
+                if (fallbackKeyHandler != null)
+                fallbackKeyHandler.keyReleased(e);
             }
 
         }

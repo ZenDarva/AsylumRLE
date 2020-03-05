@@ -11,7 +11,7 @@ import java.util.Random;
 public class EngineTest {
     public static void main(String[] args) throws IOException, FontFormatException {
 //┗┛┏┓
-        Screen screen = new Screen(new Dimension(80,20),EngineTest::processGame);
+        Screen screen = new Screen(new Dimension(80,80),EngineTest::processGame);
         Layer layer = new Layer(new Dimension(80,20),new Point(0,0));
 
         for (int x = 0; x < 80; x++) {
