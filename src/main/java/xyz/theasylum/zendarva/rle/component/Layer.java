@@ -52,4 +52,20 @@ public class Layer extends Component {
         this.palette=palette;
     }
 
+    protected void drawBox(int startX, int startY, int width, int height, Color color){
+        for (int x = startX; x < startX+width; x++) {
+            setTileCharacter(x,startY,'█');
+            setTileForeground(x,startY,color);
+            setTileCharacter(x, startY+height-1,'█');
+            setTileForeground(x,startY+height-1,color);
+        }
+
+        for (int y = startY; y < startY+height; y++) {
+            setTileCharacter(startX,y,'█');
+            setTileForeground(startX,y,color);
+            setTileCharacter(startX+width-1,y,'█');
+            setTileForeground(startX+width-1,y,color);
+        }
+    }
+
 }

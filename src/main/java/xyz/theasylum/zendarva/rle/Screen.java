@@ -14,6 +14,7 @@ import xyz.theasylum.zendarva.rle.utility.PointUtilities;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +53,7 @@ public class Screen extends Thread {
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
         try {
-            font = new Font(new FontGenerator("Fonts/PxPlus_IBM_CGAthin.ttf",12f));
+            font = new Font(new FontGenerator("Fonts/PxPlus_IBM_CGAthin.ttf",10f));
         } catch (MissingFont missingFont) {
             LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
             System.exit(-1);
@@ -117,12 +118,12 @@ public class Screen extends Thread {
     }
 
     private void draw(){
-        BufferStrategy strat = canvas.getBufferStrategy();
-        do {
-            Graphics2D g = (Graphics2D) strat.getDrawGraphics();
+        Dimension screenSize = calculateDimension();
+        BufferedImage image = new BufferedImage(screenSize.width,screenSize.height,BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics2D g= (Graphics2D) image.getGraphics();
 
             g.setColor(Color.BLACK);
-            g.fillRect(0,0,dimensions.width*font.charWidth,dimensions.height*font.charHeight);
+            g.fillRect(0,0,screenSize.width,screenSize.height);
 
             //Component list is stored newest to oldest for control interactions, but should be drawn
             //oldest to newest.
@@ -135,8 +136,13 @@ public class Screen extends Thread {
 
 
             g.dispose();
+        BufferStrategy strat = canvas.getBufferStrategy();
+        do {
+            g = (Graphics2D) strat.getDrawGraphics();
+            g.drawImage(image,0,0,canvas.getWidth(),canvas.getHeight(),null);
         } while (strat.contentsRestored());
         strat.show();
+
 
     }
     private void drawComponent(Component component, Point offset, Graphics2D g, Tile.TileTransform transform){
@@ -178,6 +184,7 @@ public class Screen extends Thread {
         canvas = new Canvas();
         canvas.setIgnoreRepaint(true);
         canvas.setPreferredSize(calculateDimension());
+        LOG.info("Starting up with {} resolution",this::calculateDimension);
         canvas.setLocation(new Point(0,0));
         frame.add(canvas);
         frame.setVisible(true);
@@ -250,6 +257,17 @@ public class Screen extends Thread {
         if (hovered == null)
             hovered=targComponent;
         return hovered;
+    }
+
+    public void setWindowSize(Dimension newSize){
+        Dimension screenSize = calculateDimension();
+        if (newSize.width/newSize.height != screenSize.width/screenSize.height){
+            LOG.error("Incorrect screen ratio supplied. current: {} new: {}",screenSize.width/screenSize.height,newSize.width/newSize.height);
+            return;
+        }
+        LOG.info("Changing to {}x{} size",newSize.width,newSize.height);
+        canvas.setSize(newSize);
+        frame.pack();
     }
 
 
