@@ -118,6 +118,17 @@ public abstract class Component extends TileGrid implements EventListener {
         drawText(x,y,text,foreground,background,text.length());
     }
 
+    public void drawText(int x, int y, String text, Color foreground, Color background, int highlight, Color highlightColor){
+        for (int i = 0; i < text.length(); i++) {
+            setTileCharacter(x+i,y,text.charAt(i));
+            if (i == highlight)
+                setTileBackground(x+i,y,highlightColor);
+            else
+                setTileBackground(x+i,y,background);
+            setTileForeground(x+i,y,foreground);
+        }
+    }
+
     protected void setDirty(){
         isDirty=true;
     }

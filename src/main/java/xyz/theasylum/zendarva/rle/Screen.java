@@ -18,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static xyz.theasylum.zendarva.rle.Tile.darken;
@@ -26,6 +27,9 @@ import static xyz.theasylum.zendarva.rle.Tile.darken;
 public class Screen extends Thread {
     protected static final Logger LOG= LogManager.getLogger(Screen.class);
     protected final Dimension dimensions;
+    private Dimension windowSize;
+    float xScaleFactor=1;
+    float yScaleFactor=1;
 
     protected Thread gameThread;
     protected Consumer<Long> mainFunction;
@@ -49,6 +53,7 @@ public class Screen extends Thread {
     }
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction){
+
         this.dimensions = dimensions;
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
@@ -58,6 +63,7 @@ public class Screen extends Thread {
             LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
             System.exit(-1);
         }
+        this.windowSize=calculateDimension();
     }
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction, Font font){
@@ -65,6 +71,31 @@ public class Screen extends Thread {
         this.mainFunction = mainFunction;
         this.componentList=new ArrayList<>();
         this.font=font;
+        windowSize=calculateDimension();
+    }
+    public Screen(Dimension dimensions, Consumer<Long> mainFunction, Font font, Dimension screenSize){
+        this.dimensions = dimensions;
+        this.mainFunction = mainFunction;
+        this.componentList=new ArrayList<>();
+        this.font=font;
+        windowSize=screenSize;
+        xScaleFactor = ((float)(dimensions.width * font.charWidth) / (float)(windowSize.width));
+        yScaleFactor = ((float)(dimensions.height * font.charHeight) / (float)(windowSize.height));
+    }
+
+    public Screen(Dimension dimensions, Consumer<Long> mainFunction, Dimension screenSize) {
+        this.dimensions = dimensions;
+        this.mainFunction = mainFunction;
+        this.componentList=new ArrayList<>();
+        try {
+            font = new Font(new FontGenerator("Fonts/PxPlus_IBM_CGAthin.ttf",10f));
+        } catch (MissingFont missingFont) {
+            LOG.error("Unable to construct engine due to missing default font: /Fonts/DejaVu Sans Mono/20pt/bitmap.png");
+            System.exit(-1);
+        }
+        windowSize=screenSize;
+        xScaleFactor = ((float)(dimensions.width * font.charWidth) / (float)(windowSize.width));
+        yScaleFactor = ((float)(dimensions.height * font.charHeight) / (float)(windowSize.height));
     }
 
     public void addComponent(Component component){
@@ -75,6 +106,9 @@ public class Screen extends Thread {
         return Collections.unmodifiableList(componentList);
     }
     public void removeComponent(Component component){
+        if (focusedComponent==component){
+            focusedComponent=null;
+        }
         componentList.remove(component);
     }
 
@@ -106,6 +140,7 @@ public class Screen extends Thread {
             } catch (InterruptedException e) {
                 LOG.info("Main engine thread interrupted. {}", e);
             }
+            EventQueueManager.instance().processEvents();
 
         }
     }
@@ -139,6 +174,8 @@ public class Screen extends Thread {
         BufferStrategy strat = canvas.getBufferStrategy();
         do {
             g = (Graphics2D) strat.getDrawGraphics();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g.drawImage(image,0,0,canvas.getWidth(),canvas.getHeight(),null);
         } while (strat.contentsRestored());
         strat.show();
@@ -167,7 +204,12 @@ public class Screen extends Thread {
                     font.draw(component.getTiles()[x][y], lX, lY, g);
             }
         }
-        component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
+        //component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
+        Map<Point, Tile> extras = component.getExtras();
+        for (Point point : extras.keySet()) {
+            Tile tile = extras.get(point);
+            font.draw(tile,offsetX+point.x*font.charWidth, offsetY+point.y*font.charHeight,g);
+        }
         for (Component child : component.getComponents()) {
             drawComponent(child,component.getLocation(),g,transform);
         }
@@ -183,8 +225,8 @@ public class Screen extends Thread {
         frame.setIgnoreRepaint(true);
         canvas = new Canvas();
         canvas.setIgnoreRepaint(true);
-        canvas.setPreferredSize(calculateDimension());
-        LOG.info("Starting up with {} resolution",this::calculateDimension);
+        canvas.setPreferredSize(windowSize);
+        LOG.info("Starting up with {} resolution",windowSize);
         canvas.setLocation(new Point(0,0));
         frame.add(canvas);
         frame.setVisible(true);
@@ -212,7 +254,7 @@ public class Screen extends Thread {
         RUNNING=false;
     }
     public Point translateToGrid(Point point){
-        return new Point(point.x/font.charWidth,point.y/font.charHeight);
+        return new Point((int)(point.x *xScaleFactor)/font.charWidth,(int)(point.y *yScaleFactor)/font.charHeight);
     }
     private Dimension calculateDimension(){
         return new Dimension(dimensions.width*font.charWidth,dimensions.height*font.charHeight);
@@ -266,6 +308,8 @@ public class Screen extends Thread {
             return;
         }
         LOG.info("Changing to {}x{} size",newSize.width,newSize.height);
+        xScaleFactor = ((float)(dimensions.width * font.charWidth) / (float)(windowSize.width));
+        yScaleFactor = ((float)(dimensions.height * font.charHeight) / (float)(windowSize.height));
         canvas.setSize(newSize);
         frame.pack();
     }
