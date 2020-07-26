@@ -92,11 +92,11 @@ public class PaletteManager {
     public <T extends Palette> T getPalette(String palette, Class<T> targClass){
         String targName=targClass.getName();
         if (!paletteData.containsKey(palette)){
-            LOG.error("Request for nonexistant palette: {}",palette);
+            LOG.error("Request for nonexistant palette: {0}",palette);
             return null;
         }
         if (!paletteData.get(palette).containsKey(targName)){
-            LOG.error("Request for nonexistant palette object '{}' in palette '{}'",palette);
+            LOG.error("Request for nonexistant palette object '{}' in palette '{0}'",palette);
             return null;
         }
         return (T) paletteData.get(palette).get(targName);
@@ -104,7 +104,7 @@ public class PaletteManager {
     }
     public Map<String, Palette> getPalette(String palette){
         if (!paletteData.containsKey(palette)){
-            LOG.error("Request for nonexistant palette: {}",palette);
+            LOG.error("Request for nonexistant palette: {0}",palette);
             return null;
         }
         return paletteData.get(palette);
@@ -119,7 +119,7 @@ public class PaletteManager {
     private boolean loadPaletteResource(String name){
         InputStream stream = this.getClass().getClassLoader().getResourceAsStream("Palette/"+name+".json");
         if (stream == null){
-            LOG.info("Failed to load palette '{}' from jar, trying file.");
+            LOG.info("Failed to load palette '{0}' from jar, trying file.");
             return false;
         }
         ObjectMapper mapper = PaletteDeserializer.getDeserializer();
@@ -129,7 +129,7 @@ public class PaletteManager {
             paletteData.put(name, (Map<String, Palette>) newPaletteData);
             return true;
         } catch (IOException e) {
-            LOG.error("Error when loading palette {} from jar: {}",name, e);
+            LOG.error("Error when loading palette {0} from jar: {1}",name, e);
             return false;
         }
     }
@@ -154,7 +154,7 @@ public class PaletteManager {
             paletteData.put(name, (Map<String, Palette>) newPaletteData);
             return true;
         } catch (IOException e) {
-            LOG.error("Error loading palette data '{}. {}",name,e);
+            LOG.error("Error loading palette data '{0}. {1}",name,e);
             return false;
         }
     }
@@ -165,7 +165,7 @@ public class PaletteManager {
             int index = result.lastIndexOf('/');
             result = result.substring(index+1);
         }
-        result.replaceAll("\\.[Jj][Ss][oO][Nn]","");
+        result = result.replaceAll("\\.[Jj][Ss][oO][Nn]","");
         return result;
     }
 }

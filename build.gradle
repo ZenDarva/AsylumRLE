@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id "org.sonarqube" version "3.0"
 }
 
 group 'xyz.theasylum'

@@ -4,23 +4,20 @@ package xyz.theasylum.zendarva.rle;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.theasylum.zendarva.rle.exception.MissingFont;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Font {
     private static final Logger LOG = LogManager.getLogger(Font.class);
@@ -74,7 +71,6 @@ public class Font {
         if (tile.getCharacter() == 0)
             return;
         Image glyph = getGlyph(tile, transform);
-        Rectangle rect = fontMap.get(tile.getCharacter());
         g.setColor(transform.transform(tile.getBackground()));
         g.drawImage(glyph, x, y, null);
     }
@@ -85,7 +81,7 @@ public class Font {
 
     private Image getGlyph(Tile tile, Tile.TileTransform transform) {
         Image glyph;
-        Map tintMap = tintCache.getIfPresent(transform);
+        Map<Integer, Image> tintMap = tintCache.getIfPresent(transform);
         if (tintMap != null) {
             glyph = tintCache.getIfPresent(transform).get(tile.hashCode());
             if (glyph != null) {
@@ -133,15 +129,19 @@ public class Font {
             LOG.error("Attempted to load a font that does not exist: {}.", file);
             throw new MissingFont();
         }
+        List<String> lines;
+        try (Stream<String> s = Files.lines(file.toPath())){
+            lines = s.filter(line->line.startsWith("char " )).collect(Collectors.toList());
+            processFontFileLines(lines, file.getName());
+        }
 
-        List<String> lines = Files.lines(file.toPath()).filter(line -> line.startsWith("char ")).collect(Collectors.toList());
-        processFontFileLines(lines, file.getName());
+
     }
 
     private void processFontFileLines(List<String> lines, String file) {
         fontMap = new HashMap<>();
         for (String line : lines) {
-            String token[] = line.split("\\s+");
+            String[] token = line.split("\\s+");
             int id = Integer.parseInt(token[1].replaceAll(".*=", ""));
             if (id > 100000) {
                 continue;
