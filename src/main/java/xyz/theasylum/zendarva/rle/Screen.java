@@ -9,8 +9,12 @@ import xyz.theasylum.zendarva.rle.event.EventListener;
 import xyz.theasylum.zendarva.rle.event.EventQueueManager;
 import xyz.theasylum.zendarva.rle.event.event.GuiEvent;
 import xyz.theasylum.zendarva.rle.exception.MissingFont;
+import xyz.theasylum.zendarva.rle.particle.Particle;
+import xyz.theasylum.zendarva.rle.particle.ParticleManager;
+import xyz.theasylum.zendarva.rle.utility.PointF;
 import xyz.theasylum.zendarva.rle.utility.PointUtilities;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferStrategy;
@@ -19,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static xyz.theasylum.zendarva.rle.Tile.darken;
 
@@ -50,9 +56,14 @@ public class Screen {
     private Point mouseLoc = new Point(0, 0);
     private Component hovered = null;
 
+    private boolean stopGameProcessing = false;
+
+    private ParticleManager particleManager = new ParticleManager();
+
     public Screen(Consumer<Long> mainFunction) {
         this(new Dimension(80, 40), mainFunction);
     }
+
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction) {
 
@@ -132,22 +143,21 @@ public class Screen {
 
 
     private void mainLoop() {
-
         try {
             while (RUNNING) {
                 long gameTime = System.currentTimeMillis() - lastTime;
                 lastTime = System.currentTimeMillis();
-                mainFunction.accept(gameTime);
+                if (!stopGameProcessing)
+                    mainFunction.accept(gameTime);
                 componentList.forEach(f -> updateComponent(f, gameTime));
+                particleManager.update(gameTime);
                 draw();
-
                 Thread.sleep(10);
-
                 EventQueueManager.instance().processEvents();
 
             }
         } catch (
-                InterruptedException e) {
+                Exception e) {
             LOG.info("Main engine thread interrupted. {0}", e);
             Thread.currentThread().interrupt();
         }
@@ -176,7 +186,13 @@ public class Screen {
             else
                 this.drawComponent(componentList.get(i), new Point(0, 0), g, darken);
         }
-
+        stopGameProcessing=false;
+        for (Particle liveParticle : particleManager.getLiveParticles()) {
+            g.setColor(liveParticle.getColor());
+            g.drawRect((int)liveParticle.getLoc().x,(int)liveParticle.getLoc().y,3,3);
+            if (liveParticle.isStopTurn())
+                stopGameProcessing=true;
+        }
 
         g.dispose();
         BufferStrategy strat = canvas.getBufferStrategy();
@@ -187,8 +203,25 @@ public class Screen {
             g.drawImage(image, 0, 0, canvas.getWidth(), canvas.getHeight(), null);
         } while (strat.contentsRestored());
         strat.show();
+    }
 
+    public void spawnParticle(Point location, PointF velocity, Color color){
+        Point center = translateFromGrid(location);
+        center.translate(font.getCharWidth()/2,font.getCharHeight()/2);
+        particleManager.spawnParticle(center, velocity,color, false);
+    }
+    public void spawnParticle(Point location, PointF velocity, Color color, BiFunction<Dimension, Point, Point> startFuzz){
+        particleManager.spawnParticle(startFuzz.apply(new Dimension(font.charWidth,font.charHeight), translateFromGrid(location)), velocity,color, false);
+    }
 
+    public void spawnParticle(Point start, Point dest, Color color, boolean stopTurn){
+        start = translateFromGrid(start);
+        start.translate(font.getCharWidth()/2,font.getCharHeight()/2);
+        dest = translateFromGrid(dest);
+        dest.translate(font.getCharWidth()/2,font.getCharHeight()/2);
+        PointF vel = new PointF((dest.x-start.x)/5f,(dest.y-start.y)/5f);
+
+        particleManager.spawnParticle(start,vel,7,color, stopTurn);
     }
 
     private void drawComponent(Component component, Point offset, Graphics2D g, Tile.TileTransform transform) {
@@ -212,12 +245,12 @@ public class Screen {
                     font.draw(component.getTiles()[x][y], lX, lY, g);
             }
         }
-        //component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
-        Map<Point, Tile> extras = component.getExtras();
-        for (Point point : extras.keySet()) {
-            Tile tile = extras.get(point);
-            font.draw(tile, offsetX + point.x * font.charWidth, offsetY + point.y * font.charHeight, g);
-        }
+        component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
+//        Map<Point, Tile> extras = component.getExtras();
+//        for (Point point : extras.keySet()) {
+//            Tile tile = extras.get(point);
+//            font.draw(tile, offsetX + point.x * font.charWidth, offsetY + point.y * font.charHeight, g);
+//        }
         for (Component child : component.getComponents()) {
             drawComponent(child, component.getLocation(), g, transform);
         }
@@ -264,6 +297,9 @@ public class Screen {
 
     public Point translateToGrid(Point point) {
         return new Point((int) (point.x * xScaleFactor) / font.charWidth, (int) (point.y * yScaleFactor) / font.charHeight);
+    }
+    public Point translateFromGrid(Point point) {
+        return new Point(point.x *font.charWidth, point.y *font.charHeight);
     }
 
     private Dimension calculateDimension() {

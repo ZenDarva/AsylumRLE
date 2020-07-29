@@ -75,11 +75,11 @@ public class Font {
         g.drawImage(glyph, x, y, null);
     }
 
-    private Image getGlyph(Tile tile) {
+    public Image getGlyph(Tile tile) {
         return getGlyph(tile, Tile.none);
     }
 
-    private Image getGlyph(Tile tile, Tile.TileTransform transform) {
+    public Image getGlyph(Tile tile, Tile.TileTransform transform) {
         Image glyph;
         Map<Integer, Image> tintMap = tintCache.getIfPresent(transform);
         if (tintMap != null) {
@@ -88,6 +88,8 @@ public class Font {
                 return glyph;
             }
         }
+//        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+//        glyph = gd.getDefaultConfiguration().createCompatibleImage(charWidth,charHeight,Transparency.TRANSLUCENT);
         glyph = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = (Graphics2D) glyph.getGraphics();
         Rectangle rect = fontMap.get(tile.getCharacter());
