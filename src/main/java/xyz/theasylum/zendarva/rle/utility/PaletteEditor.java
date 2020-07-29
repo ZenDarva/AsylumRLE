@@ -112,8 +112,18 @@ public class PaletteEditor {
     }
 
 
-
+    private static int elapsedTime=0;
+    private static int count=0;
     public static void processTick(Long time){
+        elapsedTime+=time;
+        count++;
+        if (elapsedTime >= 1000){
+            int fps = elapsedTime/count;
+            backLayer.drawText(22,15, "FPS: "+ count,Color.GREEN,Color.BLACK );
+            elapsedTime=0;
+            count=0;
+            System.out.println(time);
+        }
 
     }
 

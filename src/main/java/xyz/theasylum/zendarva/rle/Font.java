@@ -32,7 +32,7 @@ public class Font {
     protected Map<Character, Rectangle> fontMap;
 
 
-    Cache<Tile.TileTransform, Map<Integer, Image>> tintCache;
+    Cache<Tile.TileTransform, Map<Integer, BufferedImage>> tintCache;
 
 
     public Font(FontGenerator fg) {
@@ -80,16 +80,14 @@ public class Font {
     }
 
     public Image getGlyph(Tile tile, Tile.TileTransform transform) {
-        Image glyph;
-        Map<Integer, Image> tintMap = tintCache.getIfPresent(transform);
+        BufferedImage glyph;
+        Map<Integer, BufferedImage> tintMap = tintCache.getIfPresent(transform);
         if (tintMap != null) {
             glyph = tintCache.getIfPresent(transform).get(tile.hashCode());
             if (glyph != null) {
                 return glyph;
             }
         }
-//        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-//        glyph = gd.getDefaultConfiguration().createCompatibleImage(charWidth,charHeight,Transparency.TRANSLUCENT);
         glyph = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = (Graphics2D) glyph.getGraphics();
         Rectangle rect = fontMap.get(tile.getCharacter());
@@ -107,12 +105,15 @@ public class Font {
         g.setXORMode(foreColor);
         g.drawImage(fontTexture, 0, 0, rect.width, rect.height, rect.x, rect.y, rect.x + rect.width, rect.y + rect.height, null);
         g.dispose();
+        glyph=Screen.makeCompatible(glyph);
         if (tintCache.getIfPresent(transform) == null) {
             tintCache.put(transform, new HashMap<>());
         }
         tintCache.getIfPresent(transform).put(tile.hashCode(), glyph);
         return glyph;
     }
+
+
 
     private void loadFontResource(String resourceName) throws MissingFont {
         InputStream stream = Image.class.getResourceAsStream(resourceName);

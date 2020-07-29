@@ -131,6 +131,7 @@ public class FontGenerator {
         g= (Graphics2D) finalImage.getGraphics();
         g.drawImage(image,0,0,width* TILES_PER,point.y+height,0,0,width* TILES_PER,point.y+height,null);
         g.dispose();
+        finalImage=Screen.makeCompatible(finalImage);
         charWidth=width;
         charHeight=height;
     }

@@ -14,18 +14,14 @@ import xyz.theasylum.zendarva.rle.particle.ParticleManager;
 import xyz.theasylum.zendarva.rle.utility.PointF;
 import xyz.theasylum.zendarva.rle.utility.PointUtilities;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static xyz.theasylum.zendarva.rle.Tile.darken;
 
@@ -50,18 +46,18 @@ public class Screen {
     private Font font;
     private Canvas canvas;
     private EventListener fallbackKeyHandler;
-
     private Component focusedComponent = null;
-
     private Point mouseLoc = new Point(0, 0);
     private Component hovered = null;
-
     private boolean stopGameProcessing = false;
-
     private ParticleManager particleManager = new ParticleManager();
+
+    private Image[][] frameData;
+    private Map<Point, Tile> extraTiles = new HashMap<>();
 
     public Screen(Consumer<Long> mainFunction) {
         this(new Dimension(80, 40), mainFunction);
+        frameData = new Image[80][40];
     }
 
 
@@ -77,6 +73,7 @@ public class Screen {
             System.exit(-1);
         }
         this.windowSize = calculateDimension();
+        frameData = new Image[dimensions.width][dimensions.height];
     }
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction, Font font) {
@@ -85,6 +82,7 @@ public class Screen {
         this.componentList = new ArrayList<>();
         this.font = font;
         windowSize = calculateDimension();
+        frameData = new Image[dimensions.width][dimensions.height];
     }
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction, Font font, Dimension screenSize) {
@@ -95,6 +93,7 @@ public class Screen {
         windowSize = screenSize;
         xScaleFactor = ((float) (dimensions.width * font.charWidth) / (float) (windowSize.width));
         yScaleFactor = ((float) (dimensions.height * font.charHeight) / (float) (windowSize.height));
+        frameData = new Image[dimensions.width][dimensions.height];
     }
 
     public Screen(Dimension dimensions, Consumer<Long> mainFunction, Dimension screenSize) {
@@ -110,6 +109,7 @@ public class Screen {
         windowSize = screenSize;
         xScaleFactor = ((float) (dimensions.width * font.charWidth) / (float) (windowSize.width));
         yScaleFactor = ((float) (dimensions.height * font.charHeight) / (float) (windowSize.height));
+        frameData = new Image[dimensions.width][dimensions.height];
     }
 
     public void addComponent(Component component) {
@@ -152,7 +152,7 @@ public class Screen {
                 componentList.forEach(f -> updateComponent(f, gameTime));
                 particleManager.update(gameTime);
                 draw();
-                Thread.sleep(10);
+                //Thread.sleep(10);
                 EventQueueManager.instance().processEvents();
 
             }
@@ -172,7 +172,11 @@ public class Screen {
 
     private void draw() {
         Dimension screenSize = calculateDimension();
-        BufferedImage image = new BufferedImage(screenSize.width, screenSize.height, BufferedImage.TYPE_4BYTE_ABGR);
+        GraphicsConfiguration gfxConfig = GraphicsEnvironment.
+                getLocalGraphicsEnvironment().getDefaultScreenDevice().
+                getDefaultConfiguration();
+        BufferedImage image = gfxConfig.createCompatibleImage(screenSize.width, screenSize.height, Transparency.OPAQUE);
+
         Graphics2D g = (Graphics2D) image.getGraphics();
 
         g.setColor(Color.BLACK);
@@ -182,10 +186,11 @@ public class Screen {
         //oldest to newest.
         for (int i = componentList.size() - 1; i >= 0; i--) {
             if (componentList.get(i).isEnabled())
-                this.drawComponent(componentList.get(i), new Point(0, 0), g, null);
+                this.bakeComponent(componentList.get(i), new Point(0, 0), g, null);
             else
-                this.drawComponent(componentList.get(i), new Point(0, 0), g, darken);
+                this.bakeComponent(componentList.get(i), new Point(0, 0), g, darken);
         }
+        drawFrame(g);
         stopGameProcessing=false;
         for (Particle liveParticle : particleManager.getLiveParticles()) {
             g.setColor(liveParticle.getColor());
@@ -200,6 +205,8 @@ public class Screen {
             g = (Graphics2D) strat.getDrawGraphics();
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                     RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
             g.drawImage(image, 0, 0, canvas.getWidth(), canvas.getHeight(), null);
         } while (strat.contentsRestored());
         strat.show();
@@ -219,41 +226,57 @@ public class Screen {
         start.translate(font.getCharWidth()/2,font.getCharHeight()/2);
         dest = translateFromGrid(dest);
         dest.translate(font.getCharWidth()/2,font.getCharHeight()/2);
-        PointF vel = new PointF((dest.x-start.x)/5f,(dest.y-start.y)/5f);
+        PointF vel = new PointF((dest.x-start.x)/30f,(dest.y-start.y)/30f);
 
-        particleManager.spawnParticle(start,vel,7,color, stopTurn);
+        particleManager.spawnParticle(start,vel,30,color, stopTurn);
     }
 
-    private void drawComponent(Component component, Point offset, Graphics2D g, Tile.TileTransform transform) {
+    private void bakeComponent(Component component, Point offset, Graphics2D g, Tile.TileTransform transform) {
         if (!component.isVisible()) {
             return;
         }
         if (!component.isEnabled() && transform != darken)
             transform = darken;
 
-        int offsetX = offset.x * font.getCharWidth() + component.getLocation().x * font.getCharWidth();
-        int offsetY = offset.y * font.getCharHeight() + component.getLocation().y * font.getCharHeight();
+        for (Component child : component.getComponents()) {
+            bakeComponent(child, component.getLocation(), g, transform);
+        }
 
+        int offsetX = offset.x +component.getLocation().x;
+        int offsetY = offset.y + component.getLocation().y;
 
+        Map<Point, Tile> extras = component.getExtras();
+        Point extraPoint = new Point(0,0);
         for (int x = 0; x < component.getWidth(); x++) {
             for (int y = 0; y < component.getHeight(); y++) {
-                int lX = x * font.getCharWidth() + offsetX;
-                int lY = y * font.getCharHeight() + offsetY;
+                if (frameData[x][y] != null)
+                    continue;  //It's already been drawn to, we don't get to.
                 if (transform != null)
-                    font.draw(component.getTiles()[x][y], lX, lY, g, transform);
+                    frameData[x+offsetX][y+offsetY]=font.getGlyph(component.getTiles()[x][y],transform);
                 else
-                    font.draw(component.getTiles()[x][y], lX, lY, g);
+                    frameData[x+offsetX][y+offsetY]=font.getGlyph(component.getTiles()[x][y]);
+                extraPoint.move(x,y);
+                if (extras.containsKey(extraPoint)){
+                    extraTiles.put(new Point(offsetX+x,offsetY+y),extras.get(extraPoint));
+                }
             }
         }
-        component.getExtras().keySet().stream().forEach(f->font.draw(component.getExtras().get(f),offsetX + f.x * font.charWidth,offsetY+f.y *font.charHeight,g));
-//        Map<Point, Tile> extras = component.getExtras();
-//        for (Point point : extras.keySet()) {
-//            Tile tile = extras.get(point);
-//            font.draw(tile, offsetX + point.x * font.charWidth, offsetY + point.y * font.charHeight, g);
-//        }
-        for (Component child : component.getComponents()) {
-            drawComponent(child, component.getLocation(), g, transform);
+    }
+
+    private void drawFrame(Graphics2D g){
+        Point extraPoint = new Point(0,0);
+        for (int x = 0; x < dimensions.width; x++) {
+            for (int y = 0; y < dimensions.height; y++) {
+                g.drawImage(frameData[x][y],x*font.getCharWidth(),y*font.charHeight,null);
+                frameData[x][y]=null;
+                extraPoint.move(x,y);
+                if (extraTiles.containsKey(extraPoint)){
+                    font.draw(extraTiles.get(extraPoint),x*font.getCharWidth(),y *font.getCharHeight(),g);
+                }
+            }
         }
+        extraTiles.clear();
+
     }
 
     private void startup() {
@@ -456,5 +479,33 @@ public class Screen {
                 hovered = newHovered;
             }
         }
+    }
+    protected static BufferedImage makeCompatible(BufferedImage image){
+        // obtain the current system graphical settings
+        GraphicsConfiguration gfxConfig = GraphicsEnvironment.
+                getLocalGraphicsEnvironment().getDefaultScreenDevice().
+                getDefaultConfiguration();
+
+        /*
+         * if image is already compatible and optimized for current system
+         * settings, simply return it
+         */
+        if (image.getColorModel().equals(gfxConfig.getColorModel()))
+            return image;
+
+        // image is not optimized, so create a new image that is
+        BufferedImage newImage = gfxConfig.createCompatibleImage(
+                image.getWidth(), image.getHeight(), image.getTransparency());
+        newImage.setAccelerationPriority(1);
+        // get the graphics context of the new image to draw the old image on
+        Graphics2D g2d = newImage.createGraphics();
+
+        // actually draw the image and dispose of context no longer needed
+        g2d.drawImage(image, 0, 0, null);
+        g2d.dispose();
+
+
+        // return the new optimized image
+        return newImage;
     }
 }
