@@ -226,9 +226,9 @@ public class Screen {
         start.translate(font.getCharWidth()/2,font.getCharHeight()/2);
         dest = translateFromGrid(dest);
         dest.translate(font.getCharWidth()/2,font.getCharHeight()/2);
-        PointF vel = new PointF((dest.x-start.x)/30f,(dest.y-start.y)/30f);
+        PointF vel = new PointF((dest.x-start.x)/250f,(dest.y-start.y)/250f);
 
-        particleManager.spawnParticle(start,vel,30,color, stopTurn);
+        particleManager.spawnParticle(start,vel,250,color, stopTurn);
     }
 
     private void bakeComponent(Component component, Point offset, Graphics2D g, Tile.TileTransform transform) {

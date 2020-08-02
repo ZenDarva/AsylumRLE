@@ -35,12 +35,12 @@ public class ParticleManager {
     public void update(Long time) {
         List<Particle> toRemove = new LinkedList<>();
         for (Particle liveParticle : liveParticles) {
-            liveParticle.lifeSpan -= 1;
+            liveParticle.lifeSpan -= time;
 
             if (liveParticle.getLifeSpan() <= 0) {
                 toRemove.add(liveParticle);
             }
-            liveParticle.getLoc().move(liveParticle.velocity.x, liveParticle.velocity.y);
+            liveParticle.getLoc().move(liveParticle.velocity.x*time, liveParticle.velocity.y*time);
         }
         deadParticles.addAll(toRemove);
         liveParticles.removeAll(toRemove);
