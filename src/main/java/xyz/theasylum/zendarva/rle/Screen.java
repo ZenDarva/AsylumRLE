@@ -158,7 +158,7 @@ public class Screen {
             }
         } catch (
                 Exception e) {
-            LOG.info("Main engine thread interrupted. {0}", e);
+            LOG.info("Main engine thread interrupted. {}", e);
             Thread.currentThread().interrupt();
         }
     }
